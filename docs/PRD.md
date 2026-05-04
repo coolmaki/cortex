@@ -1,3 +1,7 @@
+---
+title: Product Requirements Document
+---
+
 # Cortex — Product Requirements Document
 
 **Codename:** Cortex

@@ -1,3 +1,7 @@
+---
+title: Phase 1 Implementation Plan
+---
+
 # Cortex — Phase 1 Implementation Plan
 
 ## Context
