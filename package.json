@@ -1,0 +1,132 @@
+{
+  "name": "cortex",
+  "displayName": "Cortex",
+  "description": "Your repo's brain.",
+  "version": "0.0.1",
+  "publisher": "tbd",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": ["Other"],
+  "activationEvents": [
+    "workspaceContains:**/.cortex"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "cortex",
+          "title": "Cortex",
+          "icon": "media/cortex.svg"
+        }
+      ]
+    },
+    "views": {
+      "cortex": [
+        {
+          "id": "cortex.explorer",
+          "name": "Explorer",
+          "type": "tree"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "cortex.nexus.initialize",
+        "title": "Initialize Cortex Nexus",
+        "category": "Cortex"
+      },
+      {
+        "command": "cortex.nexus.switch",
+        "title": "Switch Nexus",
+        "category": "Cortex"
+      },
+      {
+        "command": "cortex.nexus.openOrSwitch",
+        "title": "Open or Switch Nexus",
+        "category": "Cortex"
+      },
+      {
+        "command": "cortex.tree.refresh",
+        "title": "Refresh Explorer",
+        "category": "Cortex",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "cortex.tree.openInReader",
+        "title": "Open in Reader",
+        "category": "Cortex"
+      },
+      {
+        "command": "cortex.tree.openSource",
+        "title": "Open Source",
+        "category": "Cortex"
+      }
+    ],
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "cortex.nexus.openOrSwitch",
+          "when": "false"
+        },
+        {
+          "command": "cortex.nexus.switch",
+          "when": "cortex.nexusCandidates >= 2"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "cortex.tree.refresh",
+          "when": "view == cortex.explorer",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "cortex.tree.openSource",
+          "when": "view == cortex.explorer && (viewItem == cortexFile || viewItem == cortexFolderWithIndex)",
+          "group": "navigation@1"
+        },
+        {
+          "command": "cortex.tree.openInReader",
+          "when": "view == cortex.explorer && (viewItem == cortexFile || viewItem == cortexFolderWithIndex)",
+          "group": "navigation@2"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Cortex",
+      "properties": {}
+    }
+  },
+  "scripts": {
+    "build:host": "node esbuild.config.mjs",
+    "build:webviews": "vite build",
+    "build": "pnpm build:host && pnpm build:webviews",
+    "watch:host": "node esbuild.config.mjs --watch",
+    "watch:webviews": "vite build --watch",
+    "watch": "concurrently \"pnpm watch:host\" \"pnpm watch:webviews\"",
+    "package": "pnpm build && vsce package --no-dependencies --allow-missing-repository",
+    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.webviews.json",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "@types/node": "^20.17.0",
+    "@types/vscode": "^1.85.0",
+    "@vscode/vsce": "^3.2.0",
+    "concurrently": "^9.1.0",
+    "esbuild": "^0.24.2",
+    "typescript": "^5.7.2",
+    "vite": "^6.3.3",
+    "vitest": "^3.1.3"
+  },
+  "dependencies": {
+    "gray-matter": "^4.0.3",
+    "ignore": "^6.0.2"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": ["esbuild", "@vscode/vsce-sign", "keytar"]
+  }
+}
