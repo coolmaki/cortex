@@ -1,8 +1,9 @@
 .vscode/**
 node_modules/**
 src/**
-webviews/**
+tests/**
 esbuild.config.mjs
+eslint.config.mjs
 vite.config.ts
 vitest.config.ts
 tsconfig*.json
@@ -12,3 +13,5 @@ pnpm-lock.yaml
 **/*.test.ts
 .gitignore
 .npmrc
+.editorconfig
+.prettierrc

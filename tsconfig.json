@@ -1,18 +1,20 @@
 {
-  "compilerOptions": {
-    "target": "ES2022",
-    "module": "CommonJS",
-    "moduleResolution": "node",
-    "lib": ["ES2022"],
-    "outDir": "out",
-    "rootDir": "src",
-    "strict": true,
-    "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true,
-    "skipLibCheck": true,
-    "sourceMap": true,
-    "declaration": false
-  },
-  "include": ["src/**/*.ts"],
-  "exclude": ["node_modules", "out", "webviews"]
+    "compilerOptions": {
+        "target": "ES2022",
+        "module": "CommonJS",
+        "lib": ["ES2022"],
+        "outDir": "out",
+        "paths": {
+            "@/*": ["./src/*"]
+        },
+        "strict": true,
+        "esModuleInterop": true,
+        "forceConsistentCasingInFileNames": true,
+        "types": ["node"],
+        "skipLibCheck": true,
+        "sourceMap": true,
+        "declaration": false
+    },
+    "include": ["src/extension/**/*.ts", "tests/**/*.ts"],
+    "exclude": ["node_modules", "out", "src/webviews"]
 }
