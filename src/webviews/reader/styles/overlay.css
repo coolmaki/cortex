@@ -1,0 +1,143 @@
+/*
+ * Bridges github-markdown-css's hardcoded color variables to VS Code theme variables.
+ * The .markdown-body scoping and --vscode-* variables are set by the host.
+ */
+
+body {
+    margin: 0;
+    padding: 0;
+    background-color: var(--vscode-editor-background);
+    color: var(--vscode-editor-foreground);
+}
+
+body[data-theme="light"] {
+    --color-canvas-default: var(--vscode-editor-background);
+    --color-canvas-subtle: var(--vscode-sideBar-background, #f6f8fa);
+    --color-border-default: var(--vscode-panel-border, #d0d7de);
+    --color-border-muted: var(--vscode-panel-border, #d8dee4);
+    --color-neutral-muted: rgba(175, 184, 193, 0.2);
+    --color-accent-fg: var(--vscode-textLink-foreground, #0969da);
+    --color-accent-emphasis: var(--vscode-textLink-foreground, #0969da);
+    --color-fg-default: var(--vscode-editor-foreground);
+    --color-fg-muted: var(--vscode-descriptionForeground, #57606a);
+    --color-fg-subtle: var(--vscode-descriptionForeground, #6e7781);
+    --color-danger-fg: var(--vscode-errorForeground, #cf222e);
+}
+
+body[data-theme="dark"] {
+    --color-canvas-default: var(--vscode-editor-background);
+    --color-canvas-subtle: var(--vscode-sideBar-background, #161b22);
+    --color-border-default: var(--vscode-panel-border, #30363d);
+    --color-border-muted: var(--vscode-panel-border, #21262d);
+    --color-neutral-muted: rgba(110, 118, 129, 0.4);
+    --color-accent-fg: var(--vscode-textLink-foreground, #58a6ff);
+    --color-accent-emphasis: var(--vscode-textLink-foreground, #1f6feb);
+    --color-fg-default: var(--vscode-editor-foreground);
+    --color-fg-muted: var(--vscode-descriptionForeground, #8b949e);
+    --color-fg-subtle: var(--vscode-descriptionForeground, #6e7781);
+    --color-danger-fg: var(--vscode-errorForeground, #f85149);
+}
+
+.markdown-body {
+    box-sizing: border-box;
+    min-width: 200px;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 1.5rem 2rem;
+    color: var(--vscode-editor-foreground);
+    background-color: var(--vscode-editor-background);
+    font-family: var(--vscode-editor-font-family, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+}
+
+.markdown-body pre {
+    background-color: var(--color-canvas-subtle, var(--vscode-textCodeBlock-background));
+}
+
+.markdown-body code:not(pre code) {
+    background-color: var(--color-neutral-muted, rgba(110, 118, 129, 0.4));
+    padding: 0.2em 0.4em;
+    border-radius: 3px;
+}
+
+/* Shiki code blocks — override github-markdown-css pre/code */
+.markdown-body .shiki {
+    border-radius: 6px;
+    overflow: auto;
+    padding: 1em;
+    font-size: 0.875em;
+    line-height: 1.6;
+}
+
+.markdown-body .shiki code {
+    background: transparent;
+    padding: 0;
+    font-size: inherit;
+}
+
+/* GitHub Alerts (callouts) */
+.markdown-alert {
+    padding: 0.5rem 1rem;
+    margin-bottom: 1rem;
+    border-left: 4px solid var(--color-border-default);
+    border-radius: 0 4px 4px 0;
+}
+
+.markdown-alert-note { border-color: var(--vscode-textLink-foreground, #0969da); }
+.markdown-alert-tip { border-color: #1a7f37; }
+.markdown-alert-important { border-color: #8250df; }
+.markdown-alert-warning { border-color: #9a6700; }
+.markdown-alert-caution { border-color: #cf222e; }
+
+/* Mermaid */
+.mermaid-block {
+    text-align: center;
+    padding: 1rem;
+}
+
+.mermaid-block svg {
+    max-width: 100%;
+}
+
+.mermaid-error {
+    border: 1px solid var(--vscode-errorForeground, #f85149);
+    border-radius: 4px;
+    padding: 0.5rem;
+}
+
+.mermaid-error-msg {
+    color: var(--vscode-errorForeground, #f85149);
+    font-size: 0.85em;
+    margin: 0.25rem 0 0;
+}
+
+/* Render error */
+.render-error {
+    padding: 1rem 1.5rem;
+    color: var(--vscode-errorForeground, #f85149);
+    font-family: var(--vscode-font-family, sans-serif);
+}
+
+.render-error code {
+    background: var(--color-neutral-muted);
+    padding: 0.1em 0.4em;
+    border-radius: 3px;
+    font-size: 0.9em;
+}
+
+/* Oversized notice */
+.oversized-notice {
+    padding: 1.5rem;
+}
+
+.oversized-notice p {
+    margin: 0 0 1rem;
+}
+
+.oversized-preview {
+    margin-top: 1rem;
+    overflow: auto;
+    font-size: 0.85em;
+    background: var(--color-canvas-subtle, var(--vscode-textCodeBlock-background));
+    padding: 1rem;
+    border-radius: 6px;
+}

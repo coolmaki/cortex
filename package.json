@@ -1,153 +1,172 @@
 {
-  "name": "cortex",
-  "displayName": "Cortex",
-  "description": "Your repo's brain.",
-  "version": "0.0.1",
-  "publisher": "maki-software",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/coolmaki/cortex"
-  },
-  "homepage": "https://github.com/coolmaki/cortex#readme",
-  "bugs": {
-    "url": "https://github.com/coolmaki/cortex/issues"
-  },
-  "keywords": ["markdown", "notes", "knowledge base", "wiki", "notebook"],
-  "engines": {
-    "vscode": "^1.100.0"
-  },
-  "categories": [
-    "Notebooks"
-  ],
-  "activationEvents": [
-    "workspaceContains:**/.cortex"
-  ],
-  "main": "./out/extension.js",
-  "contributes": {
-    "viewsContainers": {
-      "activitybar": [
-        {
-          "id": "cortex",
-          "title": "Cortex",
-          "icon": "assets/cortex.svg"
-        }
-      ]
+    "name": "cortex",
+    "displayName": "Cortex",
+    "description": "Your repo's brain.",
+    "version": "0.1.0",
+    "publisher": "maki-software",
+    "icon": "assets/cortex.png",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/coolmaki/cortex"
     },
-    "views": {
-      "cortex": [
-        {
-          "id": "cortex.explorer",
-          "name": "Explorer",
-          "type": "tree"
-        }
-      ]
+    "homepage": "https://github.com/coolmaki/cortex#readme",
+    "bugs": {
+        "url": "https://github.com/coolmaki/cortex/issues"
     },
-    "commands": [
-      {
-        "command": "cortex.nexus.initialize",
-        "title": "Initialize Cortex Nexus",
-        "category": "Cortex"
-      },
-      {
-        "command": "cortex.nexus.switch",
-        "title": "Switch Nexus",
-        "category": "Cortex"
-      },
-      {
-        "command": "cortex.nexus.openOrSwitch",
-        "title": "Open or Switch Nexus",
-        "category": "Cortex"
-      },
-      {
-        "command": "cortex.tree.refresh",
-        "title": "Refresh Explorer",
-        "category": "Cortex",
-        "icon": "$(refresh)"
-      },
-      {
-        "command": "cortex.tree.openInReader",
-        "title": "Open in Reader",
-        "category": "Cortex"
-      },
-      {
-        "command": "cortex.tree.openSource",
-        "title": "Open Source",
-        "category": "Cortex"
-      }
+    "keywords": [
+        "markdown",
+        "notes",
+        "knowledge base",
+        "wiki",
+        "notebook"
     ],
-    "menus": {
-      "commandPalette": [
-        {
-          "command": "cortex.nexus.openOrSwitch",
-          "when": "false"
-        },
-        {
-          "command": "cortex.nexus.switch",
-          "when": "cortex.nexusCandidates >= 2"
-        }
-      ],
-      "view/title": [
-        {
-          "command": "cortex.tree.refresh",
-          "when": "view == cortex.explorer",
-          "group": "navigation"
-        }
-      ],
-      "view/item/context": [
-        {
-          "command": "cortex.tree.openSource",
-          "when": "view == cortex.explorer && (viewItem == cortexFile || viewItem == cortexFolderWithIndex)",
-          "group": "navigation@1"
-        },
-        {
-          "command": "cortex.tree.openInReader",
-          "when": "view == cortex.explorer && (viewItem == cortexFile || viewItem == cortexFolderWithIndex)",
-          "group": "navigation@2"
-        }
-      ]
+    "engines": {
+        "vscode": "^1.100.0"
     },
-    "configuration": {
-      "title": "Cortex",
-      "properties": {}
+    "categories": [
+        "Notebooks"
+    ],
+    "activationEvents": [
+        "workspaceContains:**/.cortex"
+    ],
+    "main": "./out/extension.js",
+    "contributes": {
+        "viewsContainers": {
+            "activitybar": [
+                {
+                    "id": "cortex",
+                    "title": "Cortex",
+                    "icon": "assets/cortex.svg"
+                }
+            ]
+        },
+        "views": {
+            "cortex": [
+                {
+                    "id": "cortex.explorer",
+                    "name": "Explorer",
+                    "type": "tree"
+                }
+            ]
+        },
+        "commands": [
+            {
+                "command": "cortex.nexus.initialize",
+                "title": "Initialize Cortex Nexus",
+                "category": "Cortex"
+            },
+            {
+                "command": "cortex.nexus.switch",
+                "title": "Switch Nexus",
+                "category": "Cortex"
+            },
+            {
+                "command": "cortex.nexus.openOrSwitch",
+                "title": "Open or Switch Nexus",
+                "category": "Cortex"
+            },
+            {
+                "command": "cortex.tree.refresh",
+                "title": "Refresh Explorer",
+                "category": "Cortex",
+                "icon": "$(refresh)"
+            },
+            {
+                "command": "cortex.tree.openInReader",
+                "title": "Open in Reader",
+                "category": "Cortex"
+            },
+            {
+                "command": "cortex.tree.openSource",
+                "title": "Open Source",
+                "category": "Cortex"
+            }
+        ],
+        "menus": {
+            "commandPalette": [
+                {
+                    "command": "cortex.nexus.openOrSwitch",
+                    "when": "false"
+                },
+                {
+                    "command": "cortex.nexus.switch",
+                    "when": "cortex.nexusCandidates >= 2"
+                }
+            ],
+            "view/title": [
+                {
+                    "command": "cortex.tree.refresh",
+                    "when": "view == cortex.explorer",
+                    "group": "navigation"
+                }
+            ],
+            "view/item/context": [
+                {
+                    "command": "cortex.tree.openSource",
+                    "when": "view == cortex.explorer && (viewItem == cortexFile || viewItem == cortexFolderWithIndex)",
+                    "group": "navigation@1"
+                },
+                {
+                    "command": "cortex.tree.openInReader",
+                    "when": "view == cortex.explorer && (viewItem == cortexFile || viewItem == cortexFolderWithIndex)",
+                    "group": "navigation@2"
+                }
+            ]
+        },
+        "configuration": {
+            "title": "Cortex",
+            "properties": {}
+        }
+    },
+    "scripts": {
+        "build:host": "node esbuild.config.mjs",
+        "build:webviews": "vite build",
+        "build": "pnpm build:host && pnpm build:webviews",
+        "watch:host": "node esbuild.config.mjs --watch",
+        "watch:webviews": "vite build --watch",
+        "watch": "concurrently \"pnpm watch:host\" \"pnpm watch:webviews\"",
+        "package": "pnpm build && vsce package --no-dependencies",
+        "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.webviews.json",
+        "lint": "eslint src tests",
+        "format": "prettier --write .",
+        "test": "vitest run",
+        "test:watch": "vitest"
+    },
+    "devDependencies": {
+        "@types/node": "^25.6.0",
+        "@types/vscode": "^1.100.0",
+        "@vscode/vsce": "^3.9.1",
+        "concurrently": "^9.1.0",
+        "esbuild": "^0.28.0",
+        "eslint": "^10.3.0",
+        "eslint-config-prettier": "^10.1.8",
+        "prettier": "^3.8.3",
+        "typescript": "^6.0.3",
+        "typescript-eslint": "^8.59.1",
+        "vite": "^8.0.10",
+        "vitest": "^4.1.5"
+    },
+    "dependencies": {
+        "@types/katex": "^0.16.8",
+        "@types/markdown-it": "^14.1.2",
+        "@vscode/markdown-it-katex": "^1.1.2",
+        "github-markdown-css": "^5.9.0",
+        "gray-matter": "^4.0.3",
+        "ignore": "^7.0.5",
+        "katex": "^0.16.45",
+        "markdown-it": "^14.1.1",
+        "markdown-it-emoji": "^3.0.0",
+        "markdown-it-footnote": "^4.0.0",
+        "markdown-it-github-alerts": "^1.0.1",
+        "markdown-it-task-lists": "^2.1.1",
+        "mermaid": "^11.14.0",
+        "shiki": "^4.0.2"
+    },
+    "pnpm": {
+        "onlyBuiltDependencies": [
+            "esbuild",
+            "@vscode/vsce-sign",
+            "keytar"
+        ]
     }
-  },
-  "scripts": {
-    "build:host": "node esbuild.config.mjs",
-    "build:webviews": "vite build",
-    "build": "pnpm build:host && pnpm build:webviews",
-    "watch:host": "node esbuild.config.mjs --watch",
-    "watch:webviews": "vite build --watch",
-    "watch": "concurrently \"pnpm watch:host\" \"pnpm watch:webviews\"",
-    "package": "pnpm build && vsce package --no-dependencies",
-    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.webviews.json",
-    "lint": "eslint src tests",
-    "format": "prettier --write .",
-    "test": "vitest run",
-    "test:watch": "vitest"
-  },
-  "devDependencies": {
-    "@types/node": "^25.6.0",
-    "@types/vscode": "^1.100.0",
-    "@vscode/vsce": "^3.9.1",
-    "concurrently": "^9.1.0",
-    "esbuild": "^0.28.0",
-    "eslint": "^10.3.0",
-    "eslint-config-prettier": "^10.1.8",
-    "prettier": "^3.8.3",
-    "typescript": "^6.0.3",
-    "typescript-eslint": "^8.59.1",
-    "vite": "^8.0.10",
-    "vitest": "^4.1.5"
-  },
-  "dependencies": {
-    "gray-matter": "^4.0.3",
-    "ignore": "^7.0.5"
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "esbuild",
-      "@vscode/vsce-sign",
-      "keytar"
-    ]
-  }
 }

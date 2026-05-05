@@ -12,7 +12,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     context.subscriptions.push(nexus);
 
     const frontmatter = new FrontmatterService();
-    const reader = new ReaderProvider(context.extensionUri, frontmatter);
+    const reader = new ReaderProvider(context.extensionUri, frontmatter, nexus);
     context.subscriptions.push(reader);
 
     const explorerProvider = new CortexExplorerProvider(nexus);

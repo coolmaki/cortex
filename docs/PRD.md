@@ -26,15 +26,15 @@ Unlike Obsidian, Cortex uses standard GitHub-flavored Markdown with relative lin
 
 ## 2. Terminology
 
-| Term | Definition |
-|------|-----------|
-| **Cortex** | The extension itself. |
-| **Nexus** | A knowledge vault — any workspace folder containing a `.cortex/` directory at its root. Equivalent to an Obsidian "vault." A nexus is designed to also be the root of a Git repository. |
-| **Cortex View** | Cortex's own sidebar (a custom Activity Bar container, separate from the built-in Explorer) containing the Cortex Explorer and Backlinks views. |
-| **Cortex Explorer** | The frontmatter-titled, ignore-filtered, index-file-merging file tree shown inside the Cortex View. |
-| **Reader** | Cortex's GitHub-fidelity markdown preview, rendered in a webview-backed editor tab. |
-| **Focus Mode** | A Cortex Explorer display mode that hides directories containing no `.md` files recursively. |
-| **Index File** | A `README.md`, `INDEX.md`, or `index.md` file that serves as the root document for its containing folder. When present, the folder node in the Cortex Explorer adopts the index file's frontmatter `title` as its display name, and clicking the folder opens the index file. |
+| Term                | Definition                                                                                                                                                                                                                                                                    |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Cortex**          | The extension itself.                                                                                                                                                                                                                                                         |
+| **Nexus**           | A knowledge vault — any workspace folder containing a `.cortex/` directory at its root. Equivalent to an Obsidian "vault." A nexus is designed to also be the root of a Git repository.                                                                                       |
+| **Cortex View**     | Cortex's own sidebar (a custom Activity Bar container, separate from the built-in Explorer) containing the Cortex Explorer and Backlinks views.                                                                                                                               |
+| **Cortex Explorer** | The frontmatter-titled, ignore-filtered, index-file-merging file tree shown inside the Cortex View.                                                                                                                                                                           |
+| **Reader**          | Cortex's GitHub-fidelity markdown preview, rendered in a webview-backed editor tab.                                                                                                                                                                                           |
+| **Focus Mode**      | A Cortex Explorer display mode that hides directories containing no `.md` files recursively.                                                                                                                                                                                  |
+| **Index File**      | A `README.md`, `INDEX.md`, or `index.md` file that serves as the root document for its containing folder. When present, the folder node in the Cortex Explorer adopts the index file's frontmatter `title` as its display name, and clicking the folder opens the index file. |
 
 ---
 
@@ -66,21 +66,21 @@ Unlike Obsidian, Cortex uses standard GitHub-flavored Markdown with relative lin
 
 ## 4. Tech Stack
 
-| Layer | Technology |
-|-------|-----------|
-| **Host** | VS Code (and API-compatible forks: Cursor, Windsurf) |
-| **Language** | TypeScript (extension host + webviews) |
-| **Extension API surface** | Stable APIs only — no `proposedApi` flags, so forks consume the same `.vsix` |
-| **Extension host bundler** | esbuild (single `out/extension.js`) |
-| **Webview bundler** | Vite (Rolldown), one bundle per webview |
-| **Markdown rendering** | `markdown-it` + plugins (see §6.4) |
-| **Code highlighting** | Shiki (uses VS Code TextMate grammars + themes; auto-matches user theme) |
-| **Diagrams** | `mermaid` |
-| **Math** | KaTeX (`markdown-it-katex` or equivalent) |
-| **Graph rendering** | D3.js force-directed simulation |
-| **Frontmatter parsing** | `gray-matter` (or `js-yaml` directly) |
-| **Ignore parsing** | `ignore` (npm package; honors gitignore semantics) |
-| **Package manager** | pnpm |
+| Layer                      | Technology                                                                   |
+| -------------------------- | ---------------------------------------------------------------------------- |
+| **Host**                   | VS Code (and API-compatible forks: Cursor, Windsurf)                         |
+| **Language**               | TypeScript (extension host + webviews)                                       |
+| **Extension API surface**  | Stable APIs only — no `proposedApi` flags, so forks consume the same `.vsix` |
+| **Extension host bundler** | esbuild (single `out/extension.js`)                                          |
+| **Webview bundler**        | Vite (Rolldown), one bundle per webview                                      |
+| **Markdown rendering**     | `markdown-it` + plugins (see §6.4)                                           |
+| **Code highlighting**      | Shiki (uses VS Code TextMate grammars + themes; auto-matches user theme)     |
+| **Diagrams**               | `mermaid`                                                                    |
+| **Math**                   | KaTeX (`markdown-it-katex` or equivalent)                                    |
+| **Graph rendering**        | D3.js force-directed simulation                                              |
+| **Frontmatter parsing**    | `gray-matter` (or `js-yaml` directly)                                        |
+| **Ignore parsing**         | `ignore` (npm package; honors gitignore semantics)                           |
+| **Package manager**        | pnpm                                                                         |
 
 ### 4.1 Extension Host vs. Webview Boundary
 
@@ -137,14 +137,15 @@ Cortex enforces standard GitHub-flavored Markdown (GFM) linking conventions. Thi
 
 **Supported link types:**
 
-| Type | Syntax | Example |
-|------|--------|---------|
-| Relative file link | `[text](./path/to/file.md)` | `[API Docs](./docs/api.md)` |
-| Anchor link | `[text](./file.md#heading-slug)` | `[Setup](./README.md#installation)` |
-| Relative image | `![alt](./path/to/image.png)` | `![Diagram](./assets/arch.png)` |
-| External link | `[text](https://...)` | `[GitHub](https://github.com)` |
+| Type               | Syntax                           | Example                             |
+| ------------------ | -------------------------------- | ----------------------------------- |
+| Relative file link | `[text](./path/to/file.md)`      | `[API Docs](./docs/api.md)`         |
+| Anchor link        | `[text](./file.md#heading-slug)` | `[Setup](./README.md#installation)` |
+| Relative image     | `![alt](./path/to/image.png)`    | `![Diagram](./assets/arch.png)`     |
+| External link      | `[text](https://...)`            | `[GitHub](https://github.com)`      |
 
 **Rules:**
+
 - All internal links use relative paths from the current file.
 - Heading anchors use GitHub's slugification algorithm (lowercase, hyphens for spaces, strip special chars).
 - No `[[wiki-link]]` syntax.
@@ -167,6 +168,7 @@ title: My Document Title
 **Rationale:** Repositories commonly contain many files with identical filenames (e.g., `README.md` at multiple directory levels). Using the frontmatter `title` as the canonical display name ensures every node in the Cortex Explorer and graph is uniquely identifiable.
 
 **Where the title is used:**
+
 - Cortex Explorer node label (instead of the filename).
 - Graph view node label.
 - Reader tab title.
@@ -182,6 +184,7 @@ Certain specially-named files act as the **root document** for their containing 
 - The folder remains expandable to reveal its other children.
 
 **Index file priority (first match wins):**
+
 1. `README.md`
 2. `INDEX.md`
 3. `index.md`
@@ -197,17 +200,17 @@ Cortex contributes a custom **Activity Bar container** (its own icon in the vert
 ```
 ┌──────────────────────────────────────────────────────────────────┐
 │ VS Code Title Bar                                                │
-├──┬──────────────┬────────────────────────────────────────────────┤
-│  │              │ Tab Bar (built-in)                             │
-│ AB ── Cortex     ├────────────────────────────────────────────────┤
-│ │   View         │                                              │
-│ │  ┌──────────┐  │                                              │
-│ │  │ Explorer │  │     Active editor or Reader webview tab      │
-│ │  ├──────────┤  │                                              │
-│ │  │ Backlinks│  │                                              │
-│ │  └──────────┘  │                                              │
-│  │              │                                                │
-├──┴──────────────┴────────────────────────────────────────────────┤
+├──┬────────────────┬──────────────────────────────────────────────┤
+│  │                │ Tab Bar (built-in)                           │
+│AB|── Cortex       ├──────────────────────────────────────────────┤
+│  │   View         │                                              │
+│  │  ┌──────────┐  │                                              │
+│  │  │ Explorer │  │     Active editor or Reader webview tab      │
+│  │  ├──────────┤  │                                              │
+│  │  │ Backlinks│  │                                              │
+│  │  └──────────┘  │                                              │
+│  │                │                                              │
+├──┴────────────────┴──────────────────────────────────────────────┤
 │ Status Bar (built-in) — Cortex contributes a nexus indicator     │
 └──────────────────────────────────────────────────────────────────┘
 ```
@@ -223,6 +226,7 @@ Cortex contributes a custom **Activity Bar container** (its own icon in the vert
 ### 6.2 Cortex Explorer (Tree View)
 
 **Core behavior:**
+
 - Displays a nested folder tree of the active nexus.
 - Shows only `.md` files that have valid frontmatter with a `title` property; all others are filtered out.
 - File nodes display the frontmatter `title`, not the filename.
@@ -231,24 +235,27 @@ Cortex contributes a custom **Activity Bar container** (its own icon in the vert
 - Respects `.gitignore` + `.cortex/ignore` — matched paths are never displayed.
 
 **Default click behavior:**
+
 - **Single-click on a file node:** open the file in the **Reader** (read mode). This is the default Cortex experience.
 - **Single-click on a folder node:** if it has an index file, open the index file in the Reader. If not, expand/collapse.
 - **Right-click → context menu:**
-  - **Open Source** — open the underlying `.md` file in a normal VS Code editor tab for editing.
-  - Rename
-  - Delete
-  - New File (see §6.7)
-  - New Folder
-  - Reveal in Explorer (built-in VS Code Explorer)
-  - Reveal in Finder/OS Explorer
-  - Copy Relative Path
+    - **Open Source** — open the underlying `.md` file in a normal VS Code editor tab for editing.
+    - Rename
+    - Delete
+    - New File (see §6.7)
+    - New Folder
+    - Reveal in Explorer (built-in VS Code Explorer)
+    - Reveal in Finder/OS Explorer
+    - Copy Relative Path
 
 **Focus Mode (toggle):**
+
 - When enabled, recursively hides any directory that contains zero `title`-frontmatter `.md` files within it.
 - Toggled via a tree-view title bar button and a command (`cortex.tree.toggleFocusMode`).
 - Persisted as a workspace setting (`cortex.tree.focusMode`).
 
 **Other behaviors:**
+
 - Active file is highlighted in the tree (mirroring whatever Reader/Editor tab is focused, when that file is in the nexus).
 - Drag-and-drop for moving files: stretch goal for v1; if implemented, must update relative links in affected files.
 
@@ -267,6 +274,7 @@ A second tree view in the Cortex sidebar, sitting under the Explorer.
 The Reader is Cortex's GitHub-fidelity markdown preview. It opens as a **webview-backed editor tab** (similar to how VS Code's built-in markdown preview opens a new tab). It is **not** a side-by-side toggle on the source editor — it is its own tab in the editor group.
 
 **Opening the Reader:**
+
 - Single-click a file in the Cortex Explorer (default).
 - Command: **Cortex: Open Reader for Active File** (works on any `.md` open in an editor).
 - Editor toolbar button on `.md` files: "Open Cortex Reader."
@@ -274,6 +282,7 @@ The Reader is Cortex's GitHub-fidelity markdown preview. It opens as a **webview
 **Live updates:** while the Reader tab is open, edits made in the source editor (any editor showing the same file) update the Reader live, debounced ~150ms.
 
 **Reader title bar:**
+
 - The tab title is the frontmatter `title`.
 - A toolbar button **"Edit Source"** opens the underlying file in a normal source editor (in the same editor group, or splits if held with modifier — TBD).
 
@@ -281,12 +290,12 @@ The Reader is Cortex's GitHub-fidelity markdown preview. It opens as a **webview
 
 1. `markdown-it` configured in GFM-strict mode.
 2. Plugins:
-   - GFM tables, task lists, strikethrough, autolinks (built into markdown-it presets / `markdown-it-task-lists`).
-   - **Callouts** (`> [!NOTE|TIP|IMPORTANT|WARNING|CAUTION]`) — custom plugin or `markdown-it-github-alerts`.
-   - **Mermaid** — fenced ```` ```mermaid ```` blocks render via the `mermaid` library after the main parse.
-   - **Math** — `$inline$` and `$$display$$` via KaTeX.
-   - **Footnotes** — `markdown-it-footnote`.
-   - **Emoji shortcodes** (`:smile:` → 😄) — `markdown-it-emoji`.
+    - GFM tables, task lists, strikethrough, autolinks (built into markdown-it presets / `markdown-it-task-lists`).
+    - **Callouts** (`> [!NOTE|TIP|IMPORTANT|WARNING|CAUTION]`) — custom plugin or `markdown-it-github-alerts`.
+    - **Mermaid** — fenced ` ```mermaid ` blocks render via the `mermaid` library after the main parse.
+    - **Math** — `$inline$` and `$$display$$` via KaTeX.
+    - **Footnotes** — `markdown-it-footnote`.
+    - **Emoji shortcodes** (`:smile:` → 😄) — `markdown-it-emoji`.
 3. **Code highlighting:** Shiki, configured to match the user's active VS Code theme.
 4. **Sanitization:** the rendered HTML is rendered inside the webview's isolated iframe; CSP forbids inline scripts except those bundled by Cortex. Image `src`s for relative paths are rewritten to `vscode-webview://...` URIs.
 5. **Styling:** GitHub-styled CSS (based on `github-markdown-css` or hand-curated equivalent); a dark variant; switches with the host theme.
@@ -314,14 +323,14 @@ A force-directed graph showing the connection topology of the nexus, rendered as
 Cortex contributes one status bar item (left side, low priority):
 
 - **Text:**
-  - `$(book) Cortex: <nexus folder name>` when a nexus is active.
-  - `$(book) Cortex: no nexus` when none is detected.
+    - `$(book) Cortex: <nexus folder name>` when a nexus is active.
+    - `$(book) Cortex: no nexus` when none is detected.
 - **Tooltip:**
-  - With a single candidate: "Open Cortex View."
-  - With multiple candidates: "Switch active nexus (N available)."
+    - With a single candidate: "Open Cortex View."
+    - With multiple candidates: "Switch active nexus (N available)."
 - **Click action:**
-  - If multiple workspace folders contain `.cortex/`: invokes **Cortex: Switch Nexus** (opens a quick-pick of candidates with the active one marked).
-  - Otherwise: opens / reveals the Cortex View.
+    - If multiple workspace folders contain `.cortex/`: invokes **Cortex: Switch Nexus** (opens a quick-pick of candidates with the active one marked).
+    - Otherwise: opens / reveals the Cortex View.
 
 (All other status info — cursor position, encoding, etc. — is left to VS Code.)
 
@@ -337,7 +346,6 @@ When the user invokes **New File** (right-click on a folder in the Cortex Explor
 ---
 title: My Note
 ---
-
 ```
 
 4. The Reader opens for the new file. (The user can switch to "Edit Source" immediately.)
@@ -391,15 +399,16 @@ A future v2 may add a Cortex-specific search panel scoped to titled `.md` files 
 
 All user-facing settings live in VS Code's settings system under the `cortex.*` namespace. Workspace-shared settings can be committed in `.vscode/settings.json` per VS Code convention.
 
-| Setting | Type | Default | Description |
-|---|---|---|---|
-| `cortex.tree.focusMode` | `boolean` | `false` | Hide directories with no titled `.md` descendants. |
-| `cortex.reader.theme` | `"auto" \| "light" \| "dark"` | `"auto"` | Override the Reader's theme follow-along. |
-| `cortex.reader.fontSize` | `number` | `14` | Reader body font size in px. |
-| `cortex.reader.showLineNumbers` | `boolean` | `false` | Show line numbers next to rendered headings (v2 candidate; default off). |
-| `cortex.graph.showOrphans` | `boolean` | `true` | Include nodes with no in/out edges in the graph view. |
+| Setting                         | Type                          | Default  | Description                                                              |
+| ------------------------------- | ----------------------------- | -------- | ------------------------------------------------------------------------ |
+| `cortex.tree.focusMode`         | `boolean`                     | `false`  | Hide directories with no titled `.md` descendants.                       |
+| `cortex.reader.theme`           | `"auto" \| "light" \| "dark"` | `"auto"` | Override the Reader's theme follow-along.                                |
+| `cortex.reader.fontSize`        | `number`                      | `14`     | Reader body font size in px.                                             |
+| `cortex.reader.showLineNumbers` | `boolean`                     | `false`  | Show line numbers next to rendered headings (v2 candidate; default off). |
+| `cortex.graph.showOrphans`      | `boolean`                     | `true`   | Include nodes with no in/out edges in the graph view.                    |
 
 The nexus itself is configured via files in `.cortex/`:
+
 - `.cortex/ignore` (optional) — gitignore-syntax patterns layered on top of the workspace's `.gitignore`.
 
 No `.cortex/config.json` exists in v1.
@@ -410,12 +419,12 @@ No `.cortex/config.json` exists in v1.
 
 Where possible, Cortex defers to VS Code defaults. New bindings:
 
-| Action | macOS | Windows/Linux | Command ID |
-|--------|-------|---------------|------------|
-| Open Reader for Active File | `Cmd+Shift+V` (override) | `Ctrl+Shift+V` (override) | `cortex.reader.open` |
-| Open Graph View | `Cmd+Shift+G` | `Ctrl+Shift+G` | `cortex.graph.open` |
-| Toggle Focus Mode | `Cmd+Alt+F` | `Ctrl+Alt+F` | `cortex.tree.toggleFocusMode` |
-| Reveal Active File in Cortex Explorer | `Cmd+Alt+R` | `Ctrl+Alt+R` | `cortex.tree.revealActive` |
+| Action                                | macOS                    | Windows/Linux             | Command ID                    |
+| ------------------------------------- | ------------------------ | ------------------------- | ----------------------------- |
+| Open Reader for Active File           | `Cmd+Shift+V` (override) | `Ctrl+Shift+V` (override) | `cortex.reader.open`          |
+| Open Graph View                       | `Cmd+Shift+G`            | `Ctrl+Shift+G`            | `cortex.graph.open`           |
+| Toggle Focus Mode                     | `Cmd+Alt+F`              | `Ctrl+Alt+F`              | `cortex.tree.toggleFocusMode` |
+| Reveal Active File in Cortex Explorer | `Cmd+Alt+R`              | `Ctrl+Alt+R`              | `cortex.tree.revealActive`    |
 
 > **Note on `Cmd+Shift+V`:** this conflicts with VS Code's built-in "Open Markdown Preview" command. Cortex overrides it for `.md` files when the extension is active. If the user prefers the built-in preview, the binding is removable in their `keybindings.json`. (This is the most-used reader command; the conflict cost is intentional.)
 
@@ -504,12 +513,14 @@ Webviews (isolated iframes)
 ### 11.2 Webview Message Protocol (sketch)
 
 **Host → Reader:**
+
 - `init` — initial load: file path, raw markdown, resolved theme.
 - `update` — debounced re-render with new content.
 - `themeChanged` — switch theme.
 - `navigateTo` — host-initiated navigation (e.g., from backlink click).
 
 **Reader → Host:**
+
 - `ready` — webview is mounted and ready for `init`.
 - `openSource` — user clicked "Edit Source" button.
 - `linkClicked` — internal `.md` link clicked; host responds with file content for navigation, or opens external URL.
@@ -588,6 +599,7 @@ cortex/
 ## 13. Milestones
 
 ### Phase 1 — Scaffold & Core Cortex View
+
 - VS Code extension scaffold (TS, esbuild for host, Vite for webviews, pnpm).
 - Activity Bar container + Cortex View shell.
 - NexusService (detect `.cortex/`, "Initialize Nexus" command).
@@ -598,6 +610,7 @@ cortex/
 - "Open Source" right-click action.
 
 ### Phase 2 — The Reader
+
 - Reader webview shell + host↔webview messaging protocol.
 - markdown-it pipeline: GFM tables, task lists, strikethrough, autolinks, footnotes, emoji.
 - Callouts (`> [!NOTE]` etc.).
@@ -610,6 +623,7 @@ cortex/
 - Live re-render on source edits.
 
 ### Phase 3 — Backlinks & Graph
+
 - LinkGraphService: parse all `.md`, build directed graph.
 - Cache to `.cortex/cache/linkgraph.json`; invalidate on mtime mismatch.
 - BacklinksProvider tree view.
@@ -617,6 +631,7 @@ cortex/
 - Graph webview: D3 force simulation, click-to-open, hover highlight.
 
 ### Phase 4 — Polish & Publish
+
 - Focus Mode toggle in Cortex Explorer.
 - New File / New Folder context menu actions with frontmatter scaffold.
 - Status bar item.
@@ -631,25 +646,25 @@ cortex/
 
 ## 14. Resolved Design Decisions
 
-| # | Decision | Resolution |
-|---|----------|------------|
-| 1 | Host platform | VS Code extension (was: Tauri desktop app). |
-| 2 | Forks | Cursor + Windsurf supported via stable APIs; no fork-specific code. |
-| 3 | Multi-nexus support | One nexus active at a time. In multi-root workspaces with multiple `.cortex/` folders, the user switches via the status bar quick-pick or `Cortex: Switch Nexus`. The active selection persists in workspace state. |
-| 4 | Nested nexuses | Inner `.cortex/` ignored; outer governs. |
-| 5 | Sidebar location | Cortex's own Activity Bar container, not a section in the built-in Explorer. |
-| 6 | Tree default click | Opens the file in the Reader (read mode). Source editing via right-click → "Open Source." |
-| 7 | Reader presentation | Opens as its own webview-backed editor tab (mirrors built-in markdown preview). Not a side-by-side toggle on the source editor. |
-| 8 | Reader live updates | Yes, debounced ~150ms when the source is edited. |
-| 9 | Internal link navigation in Reader | Navigates within the Reader (mini-browser with back/forward). May reconsider in v2 based on lived experience. |
-| 10 | Search | VS Code built-in workspace search for v1. Custom Cortex search is a v2 candidate. |
-| 11 | Configuration | VS Code settings (`cortex.*`) for prefs; `.cortex/ignore` for nexus-shared rules. No `.cortex/config.json`. |
-| 12 | Markdown library | `markdown-it` + plugins. |
-| 13 | Code highlighting | Shiki, host-theme synchronized. |
-| 14 | Bundling | esbuild for extension host, Vite (Rolldown) for webviews. |
-| 15 | New file UX | Prompt for title, scaffold frontmatter, open in Reader. |
-| 16 | GitHub feature parity scope | Yes: callouts, mermaid, math, footnotes, tasks, emoji. No: GitHub-ref autolinks (`#123`, `@user`). |
-| 17 | Marketplace details | TBD (publisher, display name, icon, banner). |
+| #   | Decision                           | Resolution                                                                                                                                                                                                          |
+| --- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Host platform                      | VS Code extension (was: Tauri desktop app).                                                                                                                                                                         |
+| 2   | Forks                              | Cursor + Windsurf supported via stable APIs; no fork-specific code.                                                                                                                                                 |
+| 3   | Multi-nexus support                | One nexus active at a time. In multi-root workspaces with multiple `.cortex/` folders, the user switches via the status bar quick-pick or `Cortex: Switch Nexus`. The active selection persists in workspace state. |
+| 4   | Nested nexuses                     | Inner `.cortex/` ignored; outer governs.                                                                                                                                                                            |
+| 5   | Sidebar location                   | Cortex's own Activity Bar container, not a section in the built-in Explorer.                                                                                                                                        |
+| 6   | Tree default click                 | Opens the file in the Reader (read mode). Source editing via right-click → "Open Source."                                                                                                                           |
+| 7   | Reader presentation                | Opens as its own webview-backed editor tab (mirrors built-in markdown preview). Not a side-by-side toggle on the source editor.                                                                                     |
+| 8   | Reader live updates                | Yes, debounced ~150ms when the source is edited.                                                                                                                                                                    |
+| 9   | Internal link navigation in Reader | Navigates within the Reader (mini-browser with back/forward). May reconsider in v2 based on lived experience.                                                                                                       |
+| 10  | Search                             | VS Code built-in workspace search for v1. Custom Cortex search is a v2 candidate.                                                                                                                                   |
+| 11  | Configuration                      | VS Code settings (`cortex.*`) for prefs; `.cortex/ignore` for nexus-shared rules. No `.cortex/config.json`.                                                                                                         |
+| 12  | Markdown library                   | `markdown-it` + plugins.                                                                                                                                                                                            |
+| 13  | Code highlighting                  | Shiki, host-theme synchronized.                                                                                                                                                                                     |
+| 14  | Bundling                           | esbuild for extension host, Vite (Rolldown) for webviews.                                                                                                                                                           |
+| 15  | New file UX                        | Prompt for title, scaffold frontmatter, open in Reader.                                                                                                                                                             |
+| 16  | GitHub feature parity scope        | Yes: callouts, mermaid, math, footnotes, tasks, emoji. No: GitHub-ref autolinks (`#123`, `@user`).                                                                                                                  |
+| 17  | Marketplace details                | TBD (publisher, display name, icon, banner).                                                                                                                                                                        |
 
 ---
 

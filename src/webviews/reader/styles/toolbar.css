@@ -1,0 +1,41 @@
+.sticky-header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: var(--vscode-editor-background);
+    border-bottom: 1px solid var(--vscode-panel-border, #333);
+}
+
+.toolbar {
+    display: flex;
+    gap: 0.15rem;
+    padding: 0.3rem 0.6rem;
+}
+
+.toolbar-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    cursor: pointer;
+    background: transparent;
+    color: var(--vscode-foreground);
+    border: 1px solid transparent;
+    border-radius: 4px;
+}
+
+.toolbar-btn:hover:not(:disabled) {
+    background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.31));
+    border-color: var(--vscode-toolbar-hoverOutline, transparent);
+}
+
+.toolbar-btn:disabled {
+    opacity: 0.4;
+    cursor: default;
+}
+
+.toolbar-btn svg {
+    display: block;
+}
