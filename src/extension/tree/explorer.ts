@@ -3,6 +3,8 @@ import * as path from "path";
 import type { NexusService } from "@/extension/nexus/service";
 import { FrontmatterService } from "@/extension/frontmatter/service";
 import { IgnoreService } from "@/extension/ignore/service";
+import { GroupingService } from "@/extension/grouping/service";
+import type { SiblingEntry } from "@/extension/grouping/service";
 
 const INDEX_NAMES = ["README.md", "INDEX.md", "index.md"];
 const DEBOUNCE_MS = 100;
@@ -15,6 +17,12 @@ export interface CortexNode {
     label: string;
     /** For folders: the URI of the merged index file, if one exists. */
     indexUri?: vscode.Uri;
+    /** Logical parent: child URIs to show when this node is expanded. */
+    logicalChildUris?: vscode.Uri[];
+    /** Composite ID for tree element identity (logical parents/children). */
+    nodeId?: string;
+    /** Parent node reference for getParent() on logical children. */
+    parentNode?: CortexNode;
 }
 
 export class CortexExplorerProvider implements vscode.TreeDataProvider<CortexNode> {
@@ -24,12 +32,14 @@ export class CortexExplorerProvider implements vscode.TreeDataProvider<CortexNod
     readonly onDidChangeTreeData = this._onDidChangeTreeData.event;
 
     private readonly frontmatter: FrontmatterService;
+    private readonly grouping: GroupingService;
     private ignoreService: IgnoreService | undefined;
     private readonly disposables: vscode.Disposable[] = [];
     private debounceTimer: ReturnType<typeof setTimeout> | undefined;
 
     constructor(private readonly nexus: NexusService) {
         this.frontmatter = new FrontmatterService();
+        this.grouping = new GroupingService();
         nexus.onDidChangeActive(() => this.onNexusChanged());
         this.onNexusChanged();
     }
@@ -39,14 +49,18 @@ export class CortexExplorerProvider implements vscode.TreeDataProvider<CortexNod
     }
 
     getTreeItem(node: CortexNode): vscode.TreeItem {
-        const item = new vscode.TreeItem(
-            node.label,
-            node.kind === "folder"
+        const collapsible =
+            node.kind === "folder" || node.logicalChildUris !== undefined
                 ? vscode.TreeItemCollapsibleState.Collapsed
-                : vscode.TreeItemCollapsibleState.None,
-        );
+                : vscode.TreeItemCollapsibleState.None;
+
+        const item = new vscode.TreeItem(node.label, collapsible);
 
         item.resourceUri = node.uri;
+
+        if (node.nodeId) {
+            item.id = node.nodeId;
+        }
 
         if (node.kind === "file") {
             item.contextValue = "cortexFile";
@@ -77,8 +91,17 @@ export class CortexExplorerProvider implements vscode.TreeDataProvider<CortexNod
             return [this.noNexusNode()];
         }
 
+        // Logical parent: return its logical children
+        if (parent?.logicalChildUris) {
+            return this.buildLogicalChildren(parent);
+        }
+
         const dir = parent?.uri ?? active.uri;
         return this.buildChildren(dir, active.uri, parent?.indexUri);
+    }
+
+    getParent(node: CortexNode): CortexNode | undefined {
+        return node.parentNode ?? undefined;
     }
 
     dispose(): void {
@@ -93,7 +116,6 @@ export class CortexExplorerProvider implements vscode.TreeDataProvider<CortexNod
     // ── private ───────────────────────────────────────────────────────────────
 
     private async onNexusChanged(): Promise<void> {
-        // Tear down old ignore service + watchers
         this.ignoreService?.dispose();
         this.ignoreService = undefined;
         for (const d of this.disposables) {
@@ -111,7 +133,6 @@ export class CortexExplorerProvider implements vscode.TreeDataProvider<CortexNod
         this.ignoreService = new IgnoreService(active.uri);
         await this.ignoreService.load();
 
-        // Watch .md changes to refresh the tree
         const mdWatcher = vscode.workspace.createFileSystemWatcher(
             new vscode.RelativePattern(active.uri, "**/*.md"),
         );
@@ -126,7 +147,6 @@ export class CortexExplorerProvider implements vscode.TreeDataProvider<CortexNod
             mdWatcher.onDidChange(scheduleRefresh),
         );
 
-        // Watch ignore files
         this.ignoreService.watchForChanges(() => this.scheduleRefresh());
 
         this.refresh();
@@ -154,7 +174,9 @@ export class CortexExplorerProvider implements vscode.TreeDataProvider<CortexNod
             return [];
         }
 
-        const nodes: CortexNode[] = [];
+        // Build sibling set for grouping
+        const siblingEntries: SiblingEntry[] = [];
+        const fileUriMap = new Map<string, vscode.Uri>();
 
         for (const [name, type] of entries) {
             const uri = vscode.Uri.joinPath(dirUri, name);
@@ -163,20 +185,75 @@ export class CortexExplorerProvider implements vscode.TreeDataProvider<CortexNod
             if (this.shouldSkip(name, uri)) {
                 continue;
             }
-            // Skip the index file that was merged into the parent folder node
             if (parentIndexUri && uri.toString() === parentIndexUri.toString()) {
                 continue;
             }
 
-            if (type === vscode.FileType.Directory) {
-                const folderNode = await this.buildFolderNode(uri, relPath);
+            const isDirectory = type === vscode.FileType.Directory;
+            const isIndex = !isDirectory && INDEX_NAMES.includes(name);
+            const uriStr = uri.toString();
+            fileUriMap.set(uriStr, uri);
+
+            if (isDirectory) {
+                siblingEntries.push({ uri: uriStr, basename: name, isDirectory: true, isIndex: false });
+            } else if (name.endsWith(".md")) {
+                const fm = await this.frontmatter.parse(uri);
+                if (fm) {
+                    const group = Array.isArray(fm.data.group)
+                        ? (fm.data.group as unknown[]).filter((g): g is string => typeof g === "string")
+                        : undefined;
+                    siblingEntries.push({
+                        uri: uriStr,
+                        basename: name,
+                        isDirectory: false,
+                        isIndex,
+                        group,
+                    });
+                }
+            }
+
+            void relPath;
+        }
+
+        const { logicalChildren, suppressedSiblings } = this.grouping.resolve(siblingEntries);
+
+        const nodes: CortexNode[] = [];
+
+        for (const sibling of siblingEntries) {
+            if (suppressedSiblings.has(sibling.uri)) {
+                continue;
+            }
+
+            const uri = fileUriMap.get(sibling.uri);
+            if (!uri) {
+                continue;
+            }
+
+            if (sibling.isDirectory) {
+                const folderNode = await this.buildFolderNode(uri, path.relative(nexusRoot.fsPath, uri.fsPath));
                 if (folderNode) {
                     nodes.push(folderNode);
                 }
-            } else if (type === vscode.FileType.File && name.endsWith(".md")) {
+            } else if (!sibling.isIndex) {
                 const title = await this.frontmatter.getTitle(uri);
                 if (title) {
-                    nodes.push({ kind: "file", uri, label: title });
+                    const childUriStrings = logicalChildren.get(sibling.uri);
+                    if (childUriStrings) {
+                        const logicalChildUris = childUriStrings.map((s) => {
+                            const childUri = fileUriMap.get(s);
+                            return childUri ?? vscode.Uri.parse(s);
+                        });
+                        const nodeId = sibling.uri;
+                        nodes.push({
+                            kind: "file",
+                            uri,
+                            label: title,
+                            logicalChildUris,
+                            nodeId,
+                        });
+                    } else {
+                        nodes.push({ kind: "file", uri, label: title });
+                    }
                 }
             }
         }
@@ -192,11 +269,52 @@ export class CortexExplorerProvider implements vscode.TreeDataProvider<CortexNod
         return nodes;
     }
 
+    private async buildLogicalChildren(parent: CortexNode): Promise<CortexNode[]> {
+        const children: CortexNode[] = [];
+        const parentNodeId = parent.nodeId ?? parent.uri.toString();
+
+        for (const childUri of parent.logicalChildUris!) {
+            let stat: vscode.FileStat;
+            try {
+                stat = await vscode.workspace.fs.stat(childUri);
+            } catch {
+                continue;
+            }
+
+            const nodeId = `${parentNodeId}::${childUri.toString()}`;
+
+            if (stat.type === vscode.FileType.Directory) {
+                const nexusRoot = this.nexus.active?.uri;
+                if (!nexusRoot) {
+                    continue;
+                }
+                const relPath = path.relative(nexusRoot.fsPath, childUri.fsPath);
+                const folderNode = await this.buildFolderNode(childUri, relPath);
+                if (folderNode) {
+                    children.push({ ...folderNode, nodeId, parentNode: parent });
+                }
+            } else {
+                const title = await this.frontmatter.getTitle(childUri);
+                if (title) {
+                    children.push({
+                        kind: "file",
+                        uri: childUri,
+                        label: title,
+                        nodeId,
+                        parentNode: parent,
+                    });
+                }
+            }
+        }
+
+        children.sort((a, b) => a.label.localeCompare(b.label));
+        return children;
+    }
+
     private async buildFolderNode(
         uri: vscode.Uri,
         relPath: string,
     ): Promise<CortexNode | undefined> {
-        // Find index file (first match by priority)
         let indexUri: vscode.Uri | undefined;
         let label: string = path.basename(uri.fsPath);
 
@@ -213,8 +331,6 @@ export class CortexExplorerProvider implements vscode.TreeDataProvider<CortexNod
             }
         }
 
-        // Only include folder if it has the index file, titled .md files, or
-        // subdirectories that have content. Peek one level to decide.
         const hasContent = await this.folderHasVisibleContent(uri, relPath, indexUri);
         if (!hasContent) {
             return undefined;
@@ -230,7 +346,7 @@ export class CortexExplorerProvider implements vscode.TreeDataProvider<CortexNod
     ): Promise<boolean> {
         if (indexUri) {
             return true;
-        } // index file is enough
+        }
 
         let entries: [string, vscode.FileType][];
         try {
@@ -246,7 +362,6 @@ export class CortexExplorerProvider implements vscode.TreeDataProvider<CortexNod
                 continue;
             }
             if (type === vscode.FileType.File && name.endsWith(".md")) {
-                // Don't re-check index files (they'd be counted again)
                 if (INDEX_NAMES.includes(name)) {
                     continue;
                 }
@@ -264,7 +379,6 @@ export class CortexExplorerProvider implements vscode.TreeDataProvider<CortexNod
     }
 
     private shouldSkip(name: string, absUri: vscode.Uri): boolean {
-        // Always skip dotfiles/dotdirs (.cortex, .git, etc.)
         if (name.startsWith(".")) {
             return true;
         }

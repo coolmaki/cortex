@@ -1,8 +1,8 @@
 {
-    "name": "cortex",
-    "displayName": "Cortex",
+    "name": "vscode-cortex",
+    "displayName": "Cortex for VS Code",
     "description": "Your repo's brain.",
-    "version": "0.1.0",
+    "version": "0.2.0",
     "publisher": "maki-software",
     "icon": "assets/cortex.png",
     "repository": {
@@ -46,9 +46,20 @@
                     "id": "cortex.explorer",
                     "name": "Explorer",
                     "type": "tree"
+                },
+                {
+                    "id": "cortex.backlinks",
+                    "name": "Backlinks",
+                    "type": "tree"
                 }
             ]
         },
+        "viewsWelcome": [
+            {
+                "view": "cortex.backlinks",
+                "contents": "No backlinks for this file."
+            }
+        ],
         "commands": [
             {
                 "command": "cortex.nexus.initialize",
@@ -80,6 +91,16 @@
                 "command": "cortex.tree.openSource",
                 "title": "Open Source",
                 "category": "Cortex"
+            },
+            {
+                "command": "cortex.backlinks.openLink",
+                "title": "Open Backlink",
+                "category": "Cortex"
+            },
+            {
+                "command": "cortex.dev.dumpLinkGraph",
+                "title": "Dump Link Graph (Dev)",
+                "category": "Cortex"
             }
         ],
         "menus": {
@@ -91,6 +112,10 @@
                 {
                     "command": "cortex.nexus.switch",
                     "when": "cortex.nexusCandidates >= 2"
+                },
+                {
+                    "command": "cortex.backlinks.openLink",
+                    "when": "false"
                 }
             ],
             "view/title": [

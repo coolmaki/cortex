@@ -2,97 +2,112 @@
 
 > Your repo's brain.
 
-A VS Code extension that turns any workspace folder into a **local-first, GitHub-compatible markdown knowledge base**. Cortex layers its own sidebar (file tree, backlinks, graph) and a GitHub-fidelity markdown reader on top of VS Code, while delegating editing, search, theming, and tabs to the host.
+Cortex turns any folder in VS Code into a **local-first, GitHub-compatible markdown knowledge base**. It adds its own sidebar (frontmatter-titled file tree, backlinks) and a **GitHub-fidelity markdown reader** — while leaving editing, search, tabs, and theming to VS Code.
 
-Cortex speaks plain GitHub-flavored Markdown with relative links — every link, anchor, and image renders identically in Cortex and on github.com. No proprietary syntax, no lock-in: your notes stay portable, version-controllable, and readable anywhere markdown is rendered.
+There's no proprietary syntax and no lock-in. Cortex reads plain GitHub-flavored Markdown with relative links, so every document renders identically in Cortex and on github.com. Your notes stay portable, version-controllable, and readable anywhere markdown is.
 
-> **Status:** pre-release. Phase 1 (sidebar + file tree + nexus discovery + placeholder reader) is implemented. The real markdown rendering pipeline, backlinks, graph view, and Marketplace publish are upcoming. See the [PRD](docs/PRD.md) for the full product spec.
+> **Status:** pre-release. The Reader and core navigation are functional today (v0.1.0); backlinks, logical-node grouping, and the graph view are upcoming. Marketplace publish lands with v1.0.
 
-## Core Concepts
-
-### Nexus
-
-A **nexus** is any workspace folder containing a `.cortex/` directory at its root. That's the only signal Cortex needs to recognize a knowledge base.
-
-```
-my-repo/
-├── .cortex/
-│   └── ignore         # Optional: gitignore-syntax rules layered on top of .gitignore
-├── docs/
-│   └── notes.md
-└── src/
-```
-
-Multi-root workspaces can have several nexuses — only one is active at a time. Switch between them via the status bar item or `Cortex: Switch Nexus`. Nested nexuses are ignored — the outer nexus governs the whole tree.
-
-### Frontmatter Title Requirement
-
-Markdown files must have YAML frontmatter with a `title:` field to appear in Cortex's tree, graph, or backlinks:
-
-```markdown
----
-title: My Document
 ---
 
-Content here.
-```
+## What you get
 
-Files without a valid `title` are invisible to Cortex's own views. They still appear in VS Code's built-in Explorer — Cortex doesn't (and can't) hide files there.
+### A reader that matches GitHub
 
-This rule exists because repositories often contain many `README.md` files at different levels; using the frontmatter title as the canonical display name keeps every node uniquely identifiable.
+Open any `.md` file from the Cortex sidebar and it renders in a webview-backed tab with the same fidelity as github.com:
 
-### Index Files
+- GFM tables, task lists, strikethrough, autolinks
+- Callouts (`> [!NOTE | TIP | IMPORTANT | WARNING | CAUTION]`)
+- Fenced code with **Shiki** syntax highlighting (themes track your VS Code light/dark choice)
+- Math via **KaTeX** — `$inline$` and `$$display$$`
+- Diagrams via **Mermaid** — flowcharts, sequence diagrams, etc.
+- Footnotes, emoji shortcodes (`:smile:` → 😄)
+- Heading anchors using GitHub's slug algorithm — in-document and cross-document `#heading` links resolve identically
 
-A folder containing `README.md`, `INDEX.md`, or `index.md` (in that priority order) is merged with that file:
+Math and Mermaid bundles are lazy-loaded — documents that don't use them don't pay the cost.
 
-- The folder node adopts the index file's `title` as its label.
-- Clicking the folder opens the index file in the Reader.
-- The index file is **not** shown as a separate child entry.
+### Live preview without a side-by-side dance
 
-### Ignore Rules
+Edit the source in any editor; the Reader re-renders within ~150ms while preserving your scroll position. The Reader and source aren't yoked together — they're independent tabs you can arrange however you like.
 
-Cortex applies two ignore layers, in order:
+### Mini-browser navigation inside the Reader
 
-1. The workspace's `.gitignore` (standard gitignore semantics).
-2. `.cortex/ignore` — Cortex-specific patterns layered on top, useful for hiding source directories (`src/`, `tests/`) from Cortex's views without affecting Git.
+A sticky toolbar (Back / Forward / Reload / Edit Source) sits above every document. Clicking an internal `[other doc](./other.md)` link navigates the Reader to that doc. Back and forward restore prior scroll positions. External `https://` links open in your system browser. Same-page `#anchor` links scroll without re-rendering.
 
-Both layers are watched live; changes update the tree automatically.
+### A frontmatter-aware file tree
 
-## Getting Started
+The Cortex Explorer shows your `.md` files using their frontmatter `title`, not their filenames. Folders containing a `README.md`, `INDEX.md`, or `index.md` merge with that index file — the folder displays the index's title, and clicking the folder opens that file. Files with no frontmatter `title` are hidden from Cortex's views (but still shown in VS Code's built-in Explorer).
+
+### A metadata strip on every doc
+
+`tags`, `type`, and `status` from your frontmatter render as chips and badges above the document body, so the document's identity is visible at a glance.
+
+### Multi-root + safe size limits
+
+Workspaces with several `.cortex/` folders are surfaced as switchable nexuses (status bar quick-pick). Documents over 500 KB don't render through the full pipeline by default — you get a notice with a "Render anyway" override.
+
+---
+
+## Quick start
 
 1. Open a folder in VS Code.
-2. Run **Cortex: Initialize Cortex Nexus** from the command palette — this creates `.cortex/` in the workspace and activates the extension.
-3. Click the Cortex icon in the Activity Bar to open the Cortex View.
+2. Run **Cortex: Initialize Cortex Nexus** from the command palette. This creates a `.cortex/` directory in the workspace and activates the extension.
+3. Click the Cortex icon in the Activity Bar.
 4. Create a markdown file with frontmatter:
 
     ```markdown
     ---
     title: My First Note
+    tags: [welcome]
     ---
 
-    Hello, Cortex.
+    Hello, **Cortex**.
     ```
 
-5. The file appears in the Cortex Explorer. Click to open in the Reader, or right-click → **Open Source** to edit the raw markdown.
+5. The file appears in the Cortex Explorer. Single-click opens it in the Reader; right-click → **Open Source** opens it in a regular editor.
+
+A nexus typically sits at the root of a Git repository, so your knowledge base versions naturally alongside your code.
+
+---
+
+## Core concepts (in one breath each)
+
+- **Nexus** — any workspace folder containing a `.cortex/` directory. Cortex operates on one nexus at a time.
+- **Frontmatter `title`** — required for a `.md` file to appear in Cortex's tree. (Standard files without one are still visible in VS Code's built-in Explorer.)
+- **Index files** — `README.md` / `INDEX.md` / `index.md` merge with their parent folder in the tree.
+- **Ignore rules** — Cortex honors your `.gitignore`, plus an optional `.cortex/ignore` for hiding source directories (`src/`, `tests/`) from Cortex's views without affecting Git.
+
+The full product spec, including the rendering pipeline, link semantics, and configuration model, lives in [docs/PRD.md](docs/PRD.md).
+
+---
 
 ## Commands
 
 | Command                           | Description                                                     |
 | --------------------------------- | --------------------------------------------------------------- |
 | `Cortex: Initialize Cortex Nexus` | Create `.cortex/` in a chosen workspace folder.                 |
-| `Cortex: Switch Nexus`            | Pick the active nexus (only visible when ≥ 2 candidates exist). |
+| `Cortex: Switch Nexus`            | Pick the active nexus (visible only when ≥ 2 candidates exist). |
+| `Cortex: Open in Reader`          | Open the focused file in the Reader (also via single-click).    |
+| `Cortex: Open Source`             | Open the focused file in a regular editor.                      |
 | `Cortex: Refresh Explorer`        | Force-refresh the file tree.                                    |
 
-More commands land with each phase (see roadmap).
+More commands ship with each phase.
+
+---
 
 ## Roadmap
 
-| Phase | Scope                                                                                                                                                         | Status  |
-| ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
-| **1** | Activity Bar + Cortex Explorer, nexus discovery, multi-root switching, ignore + frontmatter filtering, index file merging, placeholder Reader                 | Done    |
-| **2** | Real markdown rendering: markdown-it, Shiki, callouts (`> [!NOTE]`), Mermaid, KaTeX, footnotes, emoji shortcodes, internal link navigation, GitHub-styled CSS | Planned |
-| **3** | Backlinks tree view + force-directed graph view (D3)                                                                                                          | Planned |
-| **4** | Focus Mode, New File scaffolding, settings, Marketplace publish                                                                                               | Planned |
+| Phase | Scope                                                                                                                                            | Status         |
+| ----- | ------------------------------------------------------------------------------------------------------------------------------------------------ | -------------- |
+| **1** | Activity Bar + Cortex Explorer, nexus discovery, multi-root switching, ignore + frontmatter filtering, index file merging                        | ✅ Shipped      |
+| **2** | GitHub-fidelity Reader: markdown-it + plugins, Shiki, KaTeX, Mermaid, internal navigation, live re-render, metadata strip, soft size limit       | ✅ Shipped (v0.1.0) |
+| **3** | Logical-node grouping (`group` frontmatter) + Backlinks tree view + persistent link graph                                                        | Next           |
+| **4** | Force-directed graph view (D3)                                                                                                                   | Planned        |
+| **5** | Focus Mode, New File scaffolding, settings surface, Marketplace publish                                                                          | Planned        |
+
+See [docs/plan/](docs/plan/) for per-phase implementation plans.
+
+---
 
 ## Compatibility
 
@@ -104,46 +119,13 @@ Cortex sticks to stable VS Code APIs only — no `proposedApi` flags. The same `
 
 VS Code for the Web is out of scope (Cortex relies on Node-only APIs in the extension host).
 
+---
+
 ## Development
 
-Requires Node.js ≥ 20 and pnpm ≥ 10.
+For local setup, build commands, project structure, and codebase conventions, see [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md).
 
-```bash
-pnpm install
-pnpm build              # Build extension host + webviews once
-pnpm watch              # Rebuild on changes (host + webviews concurrently)
-pnpm typecheck          # tsc --noEmit across both tsconfigs
-pnpm lint               # ESLint
-pnpm format             # Prettier write across the repo
-pnpm test               # Vitest run
-pnpm package            # Produce cortex-<version>.vsix in the project root
-```
-
-To run the extension in a development host, open the repo in VS Code and press `F5` (uses `.vscode/launch.json`).
-
-### Project Structure
-
-```
-src/
-  extension/            VS Code extension host code (Node)
-  webviews/             Webview UI bundles (isolated iframes)
-tests/
-  extension/            Unit tests, mirroring src/extension/
-assets/                 Static assets (Activity Bar icon)
-docs/                   PRD and design docs
-```
-
-The `@/` path alias maps to `src/` in TypeScript, esbuild, Vite, and Vitest.
-
-### Tech Stack
-
-- **TypeScript 6** — extension host + webviews
-- **esbuild** — bundles the extension host (single `out/extension.js`)
-- **Vite 8** — bundles webviews (one bundle per webview)
-- **Vitest 4** — unit tests for pure-logic services
-- **gray-matter** — frontmatter parsing
-- **ignore** — gitignore semantics
-- **Prettier + ESLint** + `typescript-eslint` — formatting + linting (auto-format on save)
+---
 
 ## License
 

@@ -2,12 +2,19 @@ import * as vscode from "vscode";
 import type { NexusService } from "@/extension/nexus/service";
 import type { CortexExplorerProvider, CortexNode } from "@/extension/tree/explorer";
 import type { ReaderProvider } from "@/extension/reader/provider";
+import type { ParsedLink } from "@/extension/linkgraph/parse";
+
+interface LinkGraphAccessor {
+    getAllTrackedUris(): vscode.Uri[];
+    getOutbound(uri: vscode.Uri): ParsedLink[];
+}
 
 export function registerCommands(
     context: vscode.ExtensionContext,
     nexus: NexusService,
     explorer: CortexExplorerProvider,
     reader: ReaderProvider,
+    linkGraph?: LinkGraphAccessor,
 ): void {
     context.subscriptions.push(
         vscode.commands.registerCommand("cortex.nexus.initialize", () => cmdInitialize(nexus)),
@@ -32,6 +39,26 @@ export function registerCommands(
                 vscode.window.showTextDocument(target);
             },
         ),
+        vscode.commands.registerCommand(
+            "cortex.backlinks.openLink",
+            ({ sourceUri, line }: { sourceUri: vscode.Uri; line: number }) => {
+                vscode.window.showTextDocument(sourceUri, {
+                    selection: new vscode.Range(line - 1, 0, line - 1, 0),
+                });
+            },
+        ),
+        vscode.commands.registerCommand("cortex.dev.dumpLinkGraph", () => {
+            if (!linkGraph) {
+                console.log("cortex: LinkGraphService not initialized.");
+                return;
+            }
+            const uris = linkGraph.getAllTrackedUris();
+            const dump: Record<string, unknown> = {};
+            for (const uri of uris) {
+                dump[uri.fsPath] = linkGraph.getOutbound(uri);
+            }
+            console.log(JSON.stringify(dump, null, 2));
+        }),
     );
 }
 

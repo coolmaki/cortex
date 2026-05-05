@@ -19,6 +19,9 @@ export class ReaderProvider implements vscode.Disposable {
     private debounceTimer: ReturnType<typeof setTimeout> | undefined;
     private themeWatcher: vscode.Disposable | undefined;
 
+    private readonly _onDidChangeCurrentDoc = new vscode.EventEmitter<vscode.Uri | undefined>();
+    readonly onDidChangeCurrentDoc = this._onDidChangeCurrentDoc.event;
+
     constructor(
         private readonly extensionUri: vscode.Uri,
         private readonly frontmatter: FrontmatterService,
@@ -37,6 +40,7 @@ export class ReaderProvider implements vscode.Disposable {
         }
 
         this.currentUri = uri;
+        this._onDidChangeCurrentDoc.fire(uri);
         // For a brand-new panel the webview hasn't loaded yet — its "ready"
         // handler will fire sendInit. Sending it here too would cause two
         // simultaneous renders racing on plugin initialization.
@@ -49,6 +53,7 @@ export class ReaderProvider implements vscode.Disposable {
     dispose(): void {
         this.stopWatchers();
         this.themeWatcher?.dispose();
+        this._onDidChangeCurrentDoc.dispose();
         this.panel?.dispose();
     }
 
@@ -79,6 +84,7 @@ export class ReaderProvider implements vscode.Disposable {
             this.currentUri = undefined;
             this.webviewReady = false;
             this.stopWatchers();
+            this._onDidChangeCurrentDoc.fire(undefined);
         });
 
         this.themeWatcher?.dispose();
@@ -128,6 +134,7 @@ export class ReaderProvider implements vscode.Disposable {
     private async handleCurrentDocChanged(fileUriString: string): Promise<void> {
         const newUri = vscode.Uri.parse(fileUriString);
         this.currentUri = newUri;
+        this._onDidChangeCurrentDoc.fire(newUri);
         if (this.panel) {
             this.panel.title =
                 (await this.frontmatter.getTitle(newUri)) ?? path.basename(newUri.fsPath);
