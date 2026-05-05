@@ -5,9 +5,9 @@ title: Product Requirements Document
 # Cortex — Product Requirements Document
 
 **Codename:** Cortex
-**Version:** 2.0 (v1 of VS Code extension)
+**Version:** 2.1 (v1 of VS Code extension)
 **Author:** Maki
-**Date:** 2026-05-04
+**Date:** 2026-05-05
 **Status:** Draft
 
 ---
@@ -151,7 +151,7 @@ Cortex enforces standard GitHub-flavored Markdown (GFM) linking conventions. Thi
 - No `[[wiki-link]]` syntax.
 - Cortex must resolve and navigate all of the above link types when clicked in the Reader.
 
-### 5.3 Frontmatter Title Requirement
+### 5.3 Frontmatter
 
 Every `.md` file in the nexus **must** contain YAML frontmatter with at least a `title` property to be recognized by Cortex's own views. Files without a valid `title` are ignored — they do not appear in the Cortex Explorer, the graph, the backlinks panel, or any Cortex-provided affordances.
 
@@ -165,7 +165,19 @@ title: My Document Title
 ---
 ```
 
-**Rationale:** Repositories commonly contain many files with identical filenames (e.g., `README.md` at multiple directory levels). Using the frontmatter `title` as the canonical display name ensures every node in the Cortex Explorer and graph is uniquely identifiable.
+**Rationale for the title requirement:** Repositories commonly contain many files with identical filenames (e.g., `README.md` at multiple directory levels). Using the frontmatter `title` as the canonical display name ensures every node in the Cortex Explorer and graph is uniquely identifiable.
+
+**Recognized frontmatter properties:**
+
+| Property | Type       | Used by             | Description                                                                                            |
+| -------- | ---------- | ------------------- | ------------------------------------------------------------------------------------------------------ |
+| `title`  | `string`   | Explorer, Reader, Graph, Backlinks | Display name; required for Cortex to surface the file at all (§5.3).                       |
+| `tags`   | `string[]` | Reader (metadata strip) | Free-form tags, rendered as `#tag` chips above the document body (§6.4).                           |
+| `type`   | `string`   | Reader (metadata strip) | Document type (e.g. `note`, `task`); rendered as a filled badge. No validation in v1 (§6.4).       |
+| `status` | `string`   | Reader (metadata strip) | Document status (e.g. `draft`, `done`); rendered as a filled badge. No validation in v1 (§6.4).    |
+| `group`  | `string[]` | Cortex Explorer     | List of glob patterns naming sibling files/folders to attach as logical children (§5.5).               |
+
+Unknown properties are preserved by `gray-matter` but ignored by Cortex.
 
 **Where the title is used:**
 
@@ -190,6 +202,54 @@ Certain specially-named files act as the **root document** for their containing 
 3. `index.md`
 
 **Folders without an index file** display using the directory name as their label and behave as standard expandable tree nodes with no associated document.
+
+### 5.5 Logical Nodes
+
+A document can declare a **`group`** property in its frontmatter to logically nest matching siblings underneath itself in the Cortex Explorer. This is a presentation-only feature: it changes only how the tree is drawn — the on-disk layout, link graph, backlinks, and focus-mode evaluation are unaffected.
+
+**Frontmatter shape:**
+
+```yaml
+---
+title: Webapp
+group:
+  - webapp-*
+  - webapp/
+  - "!webapp-archived-*"
+---
+```
+
+`group` is a list of patterns matched against entries in the **same parent folder** as the declaring document. Patterns use **gitignore-style** globs — the same syntax as `.cortex/ignore`:
+
+| Pattern        | Meaning                                                       |
+| -------------- | ------------------------------------------------------------- |
+| `foo`          | Matches a file or folder named `foo`.                         |
+| `webapp-*`     | Matches files or folders whose basename starts with `webapp-`. |
+| `webapp/`      | Trailing slash → folder only.                                 |
+| `*.md`         | File only (folders rarely end in `.md`).                      |
+| `!pattern`     | Negation — excludes a previously matched entry.               |
+
+**Resolution rules:**
+
+1. **Direct siblings only.** Patterns match entries in the same folder as the declaring document. Path separators in patterns are not supported (the feature does not reach into subfolders or across the nexus).
+2. **Self and index files are never matched.** The declaring document itself, and any sibling that is the folder's index file (`README.md`/`INDEX.md`/`index.md`), are excluded from the candidate set even if a pattern would match them.
+3. **`group` on an index file is ignored.** An index file already represents its folder; declaring a group on it would be redundant. Place the property on a regular sibling instead, or — for cross-folder logical groupings — wait for a future feature.
+4. **Multi-parent is allowed.** If a sibling matches the `group` of multiple peers, it appears as a child under each of them. The same URI can be a tree element multiple times. **Reveal-in-Cortex-Explorer** disambiguates by selecting the first occurrence in alphabetical-by-parent order.
+5. **A grouped child does not appear at the top level.** Once a sibling is matched by at least one peer's group, it is removed from the regular sibling list — otherwise it would render both at the top level and under each parent.
+6. **Cycles are broken by first-write-wins.** If A's group matches B, and B's group also matches A, B becomes a child of A; B's claim on A is silently dropped (a cycle would make the tree non-renderable). Order is determined by alphabetical comparison of parent paths so the resolution is deterministic.
+
+**Tree behavior:**
+
+- A document with one or more matched children renders as an **expandable** node in the Cortex Explorer (regardless of whether it would otherwise be a leaf).
+- Single-click still opens the declaring document in the Reader (existing behavior preserved).
+- Children of a logical node retain all their normal behavior: a child folder still merges with its own index file, child documents still show their `title`, and so on.
+- Changes to the `group` property (or to the existence of matching siblings) re-render the affected branch on the next file-watcher tick.
+
+**What logical nodes are not:**
+
+- They do not affect the link graph, backlinks panel, or graph view (Phase 3) — those operate on actual link relationships.
+- They do not affect focus mode (§6.2), which still evaluates real folder contents.
+- They are not a tagging system. Tags exist separately as a frontmatter property (§5.3) and surface only in the Reader's metadata strip; they do not influence the tree.
 
 ---
 
@@ -233,6 +293,7 @@ Cortex contributes a custom **Activity Bar container** (its own icon in the vert
 - Folders with an index file (`README.md` > `INDEX.md` > `index.md`) display the index file's `title` as the folder label; clicking the folder opens the index file in the Reader. The index file is not shown as a separate child.
 - Folders without an index file display the directory name as their label.
 - Respects `.gitignore` + `.cortex/ignore` — matched paths are never displayed.
+- Honors **logical nodes** (§5.5): documents declaring a `group` property in frontmatter become expandable nodes containing the matched siblings as children, removing those siblings from the top-level list. The same sibling may appear under multiple parents.
 
 **Default click behavior:**
 
@@ -284,7 +345,13 @@ The Reader is Cortex's GitHub-fidelity markdown preview. It opens as a **webview
 **Reader title bar:**
 
 - The tab title is the frontmatter `title`.
-- A toolbar button **"Edit Source"** opens the underlying file in a normal source editor (in the same editor group, or splits if held with modifier — TBD).
+
+**Sticky header (toolbar + metadata strip):**
+
+The Reader's top region is pinned to the viewport so it remains visible while the body scrolls. It is rendered as a single `.sticky-header` block containing two rows:
+
+1. **Toolbar** — Back, Forward, Reload, Edit Source. Back/Forward drive the in-Reader history (mini-browser model, see *Internal link clicks* below). Edit Source opens the underlying file in a normal editor tab.
+2. **Metadata strip** — renders `tags`, `type`, and `status` from frontmatter when any are present. `tags` render as `#tag` chips; `type` and `status` render as filled badges. Plain neutral colors only — per-type color/icon mapping and `type` validation are deferred (Phase 2.5). The strip is omitted entirely when none of the three properties are set.
 
 **Rendering pipeline (in webview):**
 
@@ -305,6 +372,10 @@ The Reader is Cortex's GitHub-fidelity markdown preview. It opens as a **webview
 **Anchor links:** `[text](./file.md#heading-slug)` navigates to `file.md` and scrolls to the matching heading. Same-page anchors (`#heading`) just scroll.
 
 **Image rendering:** relative paths resolve against the file being rendered; Cortex sets the webview's `localResourceRoots` to the nexus root so images load.
+
+**Heading anchors:** Cortex slugifies headings using GitHub's algorithm (lowercase, punctuation stripped, whitespace → `-`, duplicates suffixed `-1`/`-2`/...) so in-document `[text](#heading)` and cross-document `[text](./other.md#heading)` links resolve identically to github.com.
+
+**Soft size limit:** documents over **500 KB** of raw bytes do not render through the full pipeline by default. Instead, the Reader shows a notice plus the first 50 KB as plain text, with a **Render anyway** button that bypasses the limit for that document. Threshold is hard-coded in v1; promoted to `cortex.reader.softSizeLimit` in a later phase.
 
 **No editing in the Reader.** All editing happens in the source editor (VS Code's built-in).
 
@@ -475,58 +546,65 @@ function shouldShowDirectory(dir):
 ### 11.1 Module Map
 
 ```
-Extension Host (Node.js)
-├── Activation
-│   ├── Detect nexus (look for .cortex/ in workspace folders).
-│   └── Show "no nexus" placeholder if absent.
+Extension Host (Node.js) — bundled to out/extension.js
+├── activate / deactivate (src/extension/index.ts)
+│   ├── Detect nexuses (workspace folders containing .cortex/).
+│   └── Wire services, providers, and command registrations.
 ├── Tree Data Providers
 │   ├── CortexExplorerProvider  ── implements vscode.TreeDataProvider
-│   └── BacklinksProvider       ── implements vscode.TreeDataProvider
+│   ├── BacklinksProvider        ── (Phase 3)
+│   └── GroupingService          ── (Phase 3) resolves frontmatter `group` into the
+│                                    explorer's child-of relationships
 ├── Webview Providers
-│   ├── ReaderProvider          ── opens markdown files in webview-backed editor tabs
-│   └── GraphProvider           ── opens graph view in a webview tab
+│   ├── ReaderProvider          ── webview lifecycle, source watchers,
+│   │                              live-render debounce, link-click dispatch
+│   └── GraphProvider           ── (Phase 3)
 ├── Services
-│   ├── NexusService            ── nexus discovery, .cortex/ initialization
-│   ├── FrontmatterService      ── parse + cache frontmatter; expose title/etc.
-│   ├── IgnoreService           ── load + match .gitignore + .cortex/ignore
-│   ├── LinkGraphService        ── build + maintain in-memory link graph
-│   ├── WatcherService          ── coordinate VS Code file watchers
-│   └── ThemeService            ── observe host theme; broadcast to webviews
+│   ├── NexusService            ── nexus discovery, switching, .cortex/ init
+│   ├── FrontmatterService      ── parse + mtime-cache frontmatter; expose title/etc.
+│   ├── IgnoreService           ── .gitignore + .cortex/ignore matching
+│   └── LinkGraphService        ── (Phase 3)
 ├── Commands  ── thin shells dispatching to services / providers
 └── Messaging ── postMessage protocol with webviews
+                  (typed contracts in src/extension/reader/messaging.ts)
 
-Webviews (isolated iframes)
-├── reader/
-│   ├── main.ts          ── receive {file, content, theme} messages; render
-│   ├── pipeline.ts      ── markdown-it instance + plugins
-│   ├── highlight.ts     ── Shiki initialization, theme switching
-│   ├── mermaid.ts       ── post-process mermaid code blocks
-│   ├── katex.ts         ── post-process math
-│   ├── nav.ts           ── intercept link clicks; emit messages or navigate
-│   └── styles/          ── github-markdown-css base + overrides
-└── graph/
-    ├── main.ts          ── receive {nodes, edges} messages
-    ├── force.ts         ── D3 force simulation
-    └── styles/
+Webviews (sandboxed iframes) — one Vite bundle per webview
+└── reader/
+    ├── main.ts        ── handshake, message routing, history wiring
+    ├── render.ts      ── markdown-it pipeline + heading slugifier
+    ├── highlight.ts   ── Shiki (JS regex engine) + theme switching
+    ├── math.ts        ── KaTeX (lazy)
+    ├── mermaid.ts     ── Mermaid (lazy) + generation-counter cancellation
+    ├── metadata.ts    ── frontmatter → strip HTML
+    ├── nav.ts         ── HistoryStack with cached HTML
+    ├── toolbar.ts     ── Back / Forward / Reload / Edit Source (Lucide SVGs)
+    ├── messaging.ts   ── typed message contracts (mirror of host side)
+    └── styles/        ── github-markdown-css overlay + per-region styles
 ```
 
-### 11.2 Webview Message Protocol (sketch)
+### 11.2 Webview Message Protocol
 
 **Host → Reader:**
 
-- `init` — initial load: file path, raw markdown, resolved theme.
-- `update` — debounced re-render with new content.
-- `themeChanged` — switch theme.
-- `navigateTo` — host-initiated navigation (e.g., from backlink click).
+| Type            | Payload                                                                              | Purpose                                                                          |
+| --------------- | ------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------- |
+| `init`          | `mode: "normal" \| "oversized"`; in normal mode: `content`, `frontmatter`, `baseUri`, `fileUri`, `themeKind`; in oversized: `preview`, `sizeBytes` | First render after webview mount, or after file switch. |
+| `update`        | `content`, `frontmatter`, `baseUri`, `fileUri`                                        | Debounced re-render of the currently-open document.                              |
+| `navigateTo`    | `content`, `frontmatter`, `baseUri`, `fileUri`, `anchor?`                              | Host-initiated navigation (internal link click). Webview pushes onto its history. |
+| `themeChanged`  | `themeKind`                                                                          | Theme switched in VS Code; webview re-applies theme + re-renders code blocks.    |
 
 **Reader → Host:**
 
-- `ready` — webview is mounted and ready for `init`.
-- `openSource` — user clicked "Edit Source" button.
-- `linkClicked` — internal `.md` link clicked; host responds with file content for navigation, or opens external URL.
-- `imageNotFound` — diagnostic.
+| Type                | Payload                       | Purpose                                                                     |
+| ------------------- | ----------------------------- | --------------------------------------------------------------------------- |
+| `ready`             | —                             | Webview is mounted; host responds with `init`.                              |
+| `openSource`        | —                             | User clicked Edit Source.                                                   |
+| `linkClicked`       | `href`                        | Anchor click; host classifies and either navigates internally, opens externally, or opens a file outside the nexus. |
+| `currentDocChanged` | `fileUri`                     | Webview navigated via Back/Forward to a different file; host updates the tab title and re-attaches watchers. |
+| `reload`            | —                             | User clicked Reload; host resends `init` for the current document.          |
+| `forceRender`       | —                             | User clicked "Render anyway" in the oversized notice; host resends `init` bypassing the size limit. |
 
-**Host → Graph / Graph → Host:** analogous; `init` carries `{nodes, edges}`; `nodeClicked` opens the file in the Reader.
+**Graph (Phase 3):** analogous; `init` carries `{nodes, edges}`; `nodeClicked` opens the file in the Reader.
 
 ### 11.3 State Management
 
@@ -536,106 +614,105 @@ The extension host is the source of truth. No frontend state library is needed �
 
 ## 12. Project Structure
 
+The codebase is split along the bundle boundary. **`src/extension/` and `src/webviews/` are bundled separately and never import each other** (see `.claude/rules/`).
+
 ```
 cortex/
-├── src/                          # Extension host (Node)
-│   ├── extension.ts              # activate() / deactivate()
-│   ├── nexus/
-│   │   └── nexus.ts              # NexusService
-│   ├── frontmatter/
-│   │   └── frontmatter.ts        # FrontmatterService
-│   ├── ignore/
-│   │   └── ignore.ts             # IgnoreService
-│   ├── linkgraph/
-│   │   ├── linkgraph.ts          # LinkGraphService
-│   │   └── parse.ts              # link extraction from markdown
-│   ├── tree/
-│   │   ├── explorer.ts           # CortexExplorerProvider
-│   │   └── backlinks.ts          # BacklinksProvider
-│   ├── reader/
-│   │   ├── provider.ts           # ReaderProvider (webview lifecycle)
-│   │   └── messaging.ts          # host-side message handlers
-│   ├── graph/
-│   │   └── provider.ts           # GraphProvider
-│   ├── watcher/
-│   │   └── watcher.ts            # WatcherService
-│   ├── theme/
-│   │   └── theme.ts              # ThemeService
-│   └── commands/
-│       └── index.ts              # command registrations
-├── webviews/
-│   ├── reader/
-│   │   ├── main.ts
-│   │   ├── pipeline.ts
-│   │   ├── highlight.ts
-│   │   ├── mermaid.ts
-│   │   ├── katex.ts
-│   │   ├── nav.ts
-│   │   ├── styles/
-│   │   │   ├── base.css          # github-markdown-css derivative
-│   │   │   └── theme.css         # light/dark switches
-│   │   └── index.html            # mount point
-│   └── graph/
-│       ├── main.ts
-│       ├── force.ts
-│       ├── styles/base.css
-│       └── index.html
-├── media/                        # Activity Bar icon, etc. (SVG)
+├── src/
+│   ├── extension/                # Extension host (Node) — bundled to out/extension.js by esbuild
+│   │   ├── index.ts              # activate() / deactivate(); wires services and providers
+│   │   ├── nexus/                # NexusService — discovery, switching, .cortex/ initialization
+│   │   ├── frontmatter/          # FrontmatterService — parse + cache YAML, mtime-keyed
+│   │   ├── ignore/               # IgnoreService — .gitignore + .cortex/ignore matching
+│   │   ├── tree/                 # CortexExplorerProvider — TreeDataProvider + index merging
+│   │   ├── reader/
+│   │   │   ├── provider.ts       # ReaderProvider — webview lifecycle, watchers, debounce
+│   │   │   ├── messaging.ts      # typed host↔webview message contracts (host side)
+│   │   │   ├── classify.ts       # pure link classifier (anchor/external/internal/outside-nexus)
+│   │   │   └── links.ts          # vscode.Uri wrapper around classify.ts
+│   │   └── commands/             # command registrations — thin shells over services/providers
+│   └── webviews/                 # Sandboxed iframes — one Vite bundle per webview
+│       └── reader/
+│           ├── index.html        # mount point + CSP (production HTML lives in provider.ts)
+│           ├── main.ts           # entry: handshake, message routing, history wiring
+│           ├── render.ts         # markdown-it instance + plugins + heading slugifier
+│           ├── highlight.ts      # Shiki (JS regex engine) — github-light/dark themes
+│           ├── math.ts           # KaTeX (lazy-loaded)
+│           ├── mermaid.ts        # Mermaid (lazy-loaded), generation-counter cancellation
+│           ├── metadata.ts       # frontmatter → strip HTML
+│           ├── nav.ts            # HistoryStack with cached HTML for back/forward
+│           ├── toolbar.ts        # Back/Forward/Reload/Edit Source (Lucide SVGs)
+│           ├── messaging.ts      # typed host↔webview message contracts (webview side)
+│           └── styles/           # base.css (github-markdown-css overlay) + per-region styles
+├── tests/
+│   └── extension/                # Vitest unit tests, mirroring src/extension/
+├── examples/                     # Smoke-test markdown documents for manual QA
+├── assets/                       # Activity Bar icon (SVG), marketplace icon (PNG)
 ├── docs/
 │   ├── PRD.md                    # this file
-│   └── phase-1-plan.md
+│   └── plan/
+│       ├── PHASE1.md
+│       └── PHASE2.md
+├── .claude/rules/                # Path-scoped conventions for extension/webviews/typescript
 ├── package.json                  # extension manifest
-├── tsconfig.json                 # extension host
-├── tsconfig.webviews.json        # webviews
-├── esbuild.config.mjs            # bundles src/ → out/extension.js
-├── vite.config.ts                # bundles webviews/* → out/webviews/*
+├── tsconfig.json                 # extension host (CJS, Node target)
+├── tsconfig.webviews.json        # webviews (ESM, browser target)
+├── esbuild.config.mjs            # bundles src/extension → out/extension.js
+├── vite.config.ts                # bundles src/webviews/<name> → out/webviews/<name>.{js,css}
 ├── .vscodeignore
 ├── .gitignore
 └── README.md
 ```
 
+The `@/` path alias maps to `src/` everywhere (TS, esbuild, Vite, Vitest). Use it for cross-directory imports within `src/`; same-directory imports stay relative.
+
 ---
 
 ## 13. Milestones
 
-### Phase 1 — Scaffold & Core Cortex View
+### Phase 1 — Scaffold & Core Cortex View ✅ Shipped
 
 - VS Code extension scaffold (TS, esbuild for host, Vite for webviews, pnpm).
 - Activity Bar container + Cortex View shell.
-- NexusService (detect `.cortex/`, "Initialize Nexus" command).
-- FrontmatterService (parse YAML, extract `title`).
+- NexusService (detect `.cortex/`, "Initialize Nexus" command, multi-root switching).
+- FrontmatterService (parse YAML, extract `title`, mtime-keyed cache).
 - IgnoreService (`.gitignore` + `.cortex/ignore`).
 - CortexExplorerProvider — file tree with title labels, index file folder merging.
 - Single-click → opens active file in a placeholder Reader webview (no rendering yet).
 - "Open Source" right-click action.
 
-### Phase 2 — The Reader
+### Phase 2 — The Reader ✅ Shipped (v0.1.0)
 
 - Reader webview shell + host↔webview messaging protocol.
-- markdown-it pipeline: GFM tables, task lists, strikethrough, autolinks, footnotes, emoji.
-- Callouts (`> [!NOTE]` etc.).
-- Shiki integration with host-theme follow-along.
-- Mermaid post-processing.
-- KaTeX math.
-- Image resolution against nexus root.
-- Internal link navigation (mini-browser with back/forward).
-- "Edit Source" toolbar button.
-- Live re-render on source edits.
+- markdown-it pipeline: GFM tables, task lists, strikethrough, autolinks, footnotes, emoji shortcodes, GitHub callouts.
+- Shiki code highlighting (`github-light` / `github-dark`) with host-theme follow-along.
+- KaTeX math (lazy-loaded).
+- Mermaid diagrams (lazy-loaded, with generation-counter cancellation on rapid re-renders).
+- Image resolution against the document's directory; CSP-correct `vscode-webview:` URIs.
+- GitHub-style heading anchors; in-document and cross-document `#heading` links resolve.
+- Internal link navigation (mini-browser with back/forward + cached HTML).
+- Sticky-header toolbar (Back / Forward / Reload / Edit Source — Lucide icons) and metadata strip (`tags` / `type` / `status`).
+- Live re-render on source edits (~150ms debounce, scroll preserved).
+- Soft 500 KB size limit with "Render anyway" override.
 
-### Phase 3 — Backlinks & Graph
+### Phase 3 — Logical Nodes & Backlinks (next)
 
-- LinkGraphService: parse all `.md`, build directed graph.
-- Cache to `.cortex/cache/linkgraph.json`; invalidate on mtime mismatch.
-- BacklinksProvider tree view.
-- Incremental graph updates on save / FS events.
-- Graph webview: D3 force simulation, click-to-open, hover highlight.
+- **GroupingService** + Cortex Explorer integration for `group` frontmatter (§5.5): glob-matching siblings, multi-parent attachment, cycle breaking, live updates on watcher events.
+- **LinkGraphService**: parse all `.md` in the nexus, build a directed link graph. Cache to `.cortex/cache/linkgraph.json`; invalidate by mtime mismatch. Incremental updates on save / FS events.
+- **BacklinksProvider** — second tree view in the Cortex sidebar; surfaces docs that link to the active file, with linking-line previews.
 
-### Phase 4 — Polish & Publish
+### Phase 4 — Graph View
+
+- **Graph webview**: D3 force simulation rendered to canvas, click-to-open, hover highlight, pan/zoom, search/filter.
+- **Cortex: Open Graph View** command + tree-title-bar button.
+- Driven off the same `LinkGraphService` produced in Phase 3.
+
+### Phase 5 — Polish & Publish
 
 - Focus Mode toggle in Cortex Explorer.
 - New File / New Folder context menu actions with frontmatter scaffold.
 - Status bar item.
-- Settings (`cortex.*`) implementation + `package.json` `contributes.configuration`.
+- Settings (`cortex.*`) implementation + `package.json` `contributes.configuration` (including `cortex.reader.softSizeLimit` promotion).
 - Reveal Active File command.
 - Activity Bar icon finalization.
 - README, marketplace metadata (publisher, display name, icon, gallery banner — TBD).
@@ -665,6 +742,8 @@ cortex/
 | 15  | New file UX                        | Prompt for title, scaffold frontmatter, open in Reader.                                                                                                                                                             |
 | 16  | GitHub feature parity scope        | Yes: callouts, mermaid, math, footnotes, tasks, emoji. No: GitHub-ref autolinks (`#123`, `@user`).                                                                                                                  |
 | 17  | Marketplace details                | TBD (publisher, display name, icon, banner).                                                                                                                                                                        |
+| 18  | Reader metadata strip              | Sits in a sticky header above the rendered body, alongside the toolbar. Renders `tags` (chips), `type` and `status` (filled badges). Plain neutral colors; per-type color/icon mapping deferred to Phase 2.5.       |
+| 19  | Logical nodes (`group`)            | Frontmatter `group` (list of gitignore-style globs) attaches matching same-folder siblings as logical children in the Cortex Explorer. Multi-parent allowed; cycles broken by first-write-wins; index files exempt. |
 
 ---
 
