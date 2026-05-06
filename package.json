@@ -2,7 +2,7 @@
     "name": "vscode-cortex",
     "displayName": "Cortex for VS Code",
     "description": "Your repo's brain.",
-    "version": "0.2.0",
+    "version": "0.2.1",
     "publisher": "maki-software",
     "icon": "assets/cortex.png",
     "repository": {
