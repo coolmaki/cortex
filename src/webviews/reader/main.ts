@@ -3,7 +3,7 @@ import { renderMarkdown, setTheme, currentGeneration } from "./render";
 import { pickMetadata, renderStrip } from "./metadata";
 import { renderMermaid } from "./mermaid";
 import { HistoryStack } from "./nav";
-import { renderToolbar, updateToolbarState } from "./toolbar";
+import { renderToolbar } from "./toolbar";
 
 declare function acquireVsCodeApi(): {
     postMessage(message: unknown): void;
@@ -24,10 +24,11 @@ const toolbarEl = document.getElementById("toolbar") as HTMLElement;
 const history = new HistoryStack();
 let currentTheme: ThemeKind = "dark";
 
-toolbarEl.appendChild(renderToolbar(false, false, post, navigateBack, navigateForward));
+const toolbar = renderToolbar(post, navigateBack, navigateForward);
+toolbarEl.appendChild(toolbar.el);
 
 function updateToolbar(): void {
-    updateToolbarState(toolbarEl, history.canGoBack(), history.canGoForward());
+    toolbar.setNav(history.canGoBack(), history.canGoForward());
 }
 
 function navigateBack(): void {
@@ -54,9 +55,10 @@ function navigateForward(): void {
     }
 }
 
-function restoreFromHistory(entry: { fileUri: string; html: string; stripHtml: string; scrollY: number }): void {
+function restoreFromHistory(entry: { fileUri: string; relPath: string; html: string; stripHtml: string; scrollY: number }): void {
     contentEl.innerHTML = entry.html;
     stripEl.innerHTML = entry.stripHtml;
+    toolbar.setPath(entry.relPath);
     wireLinks();
     updateToolbar();
     requestAnimationFrame(() => {
@@ -134,8 +136,8 @@ function applyTheme(kind: ThemeKind): void {
     document.body.dataset.theme = kind === "dark" || kind === "high-contrast" ? "dark" : "light";
 }
 
-function emptyEntry(fileUri: string, baseUri: string, frontmatter: ReaderFrontmatter) {
-    return { fileUri, baseUri, scrollY: 0, html: "", stripHtml: "", frontmatter };
+function emptyEntry(fileUri: string, baseUri: string, frontmatter: ReaderFrontmatter, relPath: string) {
+    return { fileUri, baseUri, relPath, scrollY: 0, html: "", stripHtml: "", frontmatter };
 }
 
 window.addEventListener("message", (event: MessageEvent<HostMessage>) => {
@@ -160,13 +162,14 @@ window.addEventListener("message", (event: MessageEvent<HostMessage>) => {
                 applyTheme(msg.themeKind);
                 contentEl.innerHTML = "";
                 stripEl.innerHTML = "";
+                toolbar.setPath(msg.relPath);
                 // First init replaces; subsequent inits (e.g. reload of same doc)
                 // should also replace, not stack.
                 const current = history.current();
                 if (current && current.fileUri === msg.fileUri) {
-                    history.replaceCurrent(emptyEntry(msg.fileUri, msg.baseUri, msg.frontmatter));
+                    history.replaceCurrent(emptyEntry(msg.fileUri, msg.baseUri, msg.frontmatter, msg.relPath));
                 } else {
-                    history.push(emptyEntry(msg.fileUri, msg.baseUri, msg.frontmatter));
+                    history.push(emptyEntry(msg.fileUri, msg.baseUri, msg.frontmatter, msg.relPath));
                 }
                 updateToolbar();
                 void renderContent(msg.content, msg.frontmatter, msg.baseUri, msg.anchor);
@@ -175,14 +178,16 @@ window.addEventListener("message", (event: MessageEvent<HostMessage>) => {
         }
         case "update": {
             const savedScroll = window.scrollY;
+            toolbar.setPath(msg.relPath);
             void renderContent(msg.content, msg.frontmatter, msg.baseUri).then(() => {
                 window.scrollTo({ top: savedScroll });
             });
             break;
         }
         case "navigateTo": {
-            history.push(emptyEntry(msg.fileUri, msg.baseUri, msg.frontmatter));
+            history.push(emptyEntry(msg.fileUri, msg.baseUri, msg.frontmatter, msg.relPath));
             updateToolbar();
+            toolbar.setPath(msg.relPath);
             contentEl.innerHTML = "";
             stripEl.innerHTML = "";
             window.scrollTo({ top: 0 });

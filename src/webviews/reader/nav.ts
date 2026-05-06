@@ -3,6 +3,7 @@ import type { ReaderFrontmatter } from "./messaging";
 export interface HistoryEntry {
     fileUri: string;
     baseUri: string;
+    relPath: string;
     scrollY: number;
     /** Cached rendered HTML — populated after first render of this entry. */
     html: string;

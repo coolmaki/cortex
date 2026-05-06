@@ -34,7 +34,7 @@ describe("serializeCache / deserializeCache (round-trip)", () => {
     it("produces valid JSON with version field", () => {
         const json = serializeCache(new Map([["a.md", entry1]]));
         const parsed = JSON.parse(json);
-        expect(parsed.version).toBe(1);
+        expect(parsed.version).toBe(2);
         expect(parsed.entries["a.md"]).toBeDefined();
     });
 });
@@ -59,7 +59,7 @@ describe("deserializeCache", () => {
 
     it("skips invalid entries but keeps valid ones", () => {
         const mixed = JSON.stringify({
-            version: 1,
+            version: 2,
             entries: {
                 "good.md": entry1,
                 "bad.md": { mtime: "notanumber", outbound: [] },

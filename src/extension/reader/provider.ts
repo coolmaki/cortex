@@ -167,6 +167,7 @@ export class ReaderProvider implements vscode.Disposable {
                     this.panel.title = title;
                 }
                 this.currentUri = targetUri;
+                this._onDidChangeCurrentDoc.fire(targetUri);
                 await this.sendNavigateTo(targetUri, resolved.anchor);
                 this.watchSource(targetUri);
                 break;
@@ -223,6 +224,7 @@ export class ReaderProvider implements vscode.Disposable {
             frontmatter,
             baseUri,
             fileUri: uri.toString(),
+            relPath: this.makeRelPath(uri),
             themeKind,
         });
     }
@@ -245,6 +247,7 @@ export class ReaderProvider implements vscode.Disposable {
             frontmatter,
             baseUri,
             fileUri: uri.toString(),
+            relPath: this.makeRelPath(uri),
             anchor,
         });
     }
@@ -267,7 +270,17 @@ export class ReaderProvider implements vscode.Disposable {
             frontmatter,
             baseUri,
             fileUri: uri.toString(),
+            relPath: this.makeRelPath(uri),
         });
+    }
+
+    private makeRelPath(uri: vscode.Uri): string {
+        const root = this.nexus.active?.uri.fsPath;
+        if (!root) {
+            return path.basename(uri.fsPath);
+        }
+        const rel = path.relative(root, uri.fsPath);
+        return rel.split(path.sep).join("/");
     }
 
     private parseFile(

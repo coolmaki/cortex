@@ -1,6 +1,6 @@
 import type { ParsedLink } from "./parse";
 
-const CACHE_VERSION = 1;
+const CACHE_VERSION = 2;
 
 export interface CacheEntry {
     mtime: number;

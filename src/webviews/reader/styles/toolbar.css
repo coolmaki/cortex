@@ -8,8 +8,22 @@
 
 .toolbar {
     display: flex;
+    align-items: center;
     gap: 0.15rem;
     padding: 0.3rem 0.6rem;
+}
+
+.toolbar-path {
+    flex: 1;
+    min-width: 0;
+    margin-left: 0.5rem;
+    font-family: var(--vscode-editor-font-family, var(--vscode-font-family, monospace));
+    font-size: 0.78rem;
+    color: var(--vscode-descriptionForeground, var(--vscode-disabledForeground, #888));
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    user-select: text;
 }
 
 .toolbar-btn {

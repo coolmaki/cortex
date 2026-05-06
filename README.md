@@ -6,7 +6,7 @@ Cortex turns any folder in VS Code into a **local-first, GitHub-compatible markd
 
 There's no proprietary syntax and no lock-in. Cortex reads plain GitHub-flavored Markdown with relative links, so every document renders identically in Cortex and on github.com. Your notes stay portable, version-controllable, and readable anywhere markdown is.
 
-> **Status:** pre-release. The Reader and core navigation are functional today (v0.1.0); backlinks, logical-node grouping, and the graph view are upcoming. Marketplace publish lands with v1.0.
+> **Status:** pre-release. The Reader, Backlinks panel, and logical-node grouping are functional today (v0.2.0); the force-directed graph view is upcoming. Marketplace publish lands with v1.0.
 
 ---
 
@@ -37,6 +37,14 @@ A sticky toolbar (Back / Forward / Reload / Edit Source) sits above every docume
 ### A frontmatter-aware file tree
 
 The Cortex Explorer shows your `.md` files using their frontmatter `title`, not their filenames. Folders containing a `README.md`, `INDEX.md`, or `index.md` merge with that index file — the folder displays the index's title, and clicking the folder opens that file. Files with no frontmatter `title` are hidden from Cortex's views (but still shown in VS Code's built-in Explorer).
+
+### Logical-node grouping
+
+A document can declare a `group` frontmatter property — a list of gitignore-style globs — to logically nest matching same-folder siblings underneath itself in the Cortex Explorer. The on-disk layout is unchanged; only the tree presentation is. Multi-parent is allowed (a child can appear under multiple parents) and cycles break deterministically.
+
+### Backlinks panel
+
+A second tree view in the Cortex sidebar shows every doc linking to the file you're reading, with a per-link line preview. Cortex maintains a persistent link graph at `.cortex/cache/linkgraph.json` — built once on activation, then updated incrementally on save and file-system events.
 
 ### A metadata strip on every doc
 
@@ -101,8 +109,8 @@ More commands ship with each phase.
 | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------ | -------------- |
 | **1** | Activity Bar + Cortex Explorer, nexus discovery, multi-root switching, ignore + frontmatter filtering, index file merging                        | ✅ Shipped      |
 | **2** | GitHub-fidelity Reader: markdown-it + plugins, Shiki, KaTeX, Mermaid, internal navigation, live re-render, metadata strip, soft size limit       | ✅ Shipped (v0.1.0) |
-| **3** | Logical-node grouping (`group` frontmatter) + Backlinks tree view + persistent link graph                                                        | Next           |
-| **4** | Force-directed graph view (D3)                                                                                                                   | Planned        |
+| **3** | Logical-node grouping (`group` frontmatter) + Backlinks tree view + persistent link graph                                                        | ✅ Shipped (v0.2.0) |
+| **4** | Force-directed graph view (D3)                                                                                                                   | Next           |
 | **5** | Focus Mode, New File scaffolding, settings surface, Marketplace publish                                                                          | Planned        |
 
 See [docs/plan/](docs/plan/) for per-phase implementation plans.

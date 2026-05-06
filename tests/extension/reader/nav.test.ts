@@ -5,6 +5,7 @@ function entry(uri: string, scrollY = 0) {
     return {
         fileUri: uri,
         baseUri: uri,
+        relPath: uri,
         scrollY,
         html: "",
         stripHtml: "",

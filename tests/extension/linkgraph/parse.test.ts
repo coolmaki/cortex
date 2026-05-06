@@ -60,6 +60,21 @@ describe("parseLinks", () => {
         expect(result[0].href).toBe("./ref.md");
     });
 
+    it("reports the correct line for a link inside a table cell", () => {
+        const source = [
+            "intro",
+            "",
+            "| File | Notes |",
+            "|------|-------|",
+            "| [a](./a.md) | first |",
+            "| [b](./b.md) | second |",
+        ].join("\n");
+        const result = parseLinks(source);
+        expect(result).toHaveLength(2);
+        expect(result[0]).toMatchObject({ href: "./a.md", line: 5 });
+        expect(result[1]).toMatchObject({ href: "./b.md", line: 6 });
+    });
+
     it("excludes links inside fenced code blocks", () => {
         const source = "```\n[link](./not-a-link.md)\n```";
         const result = parseLinks(source);

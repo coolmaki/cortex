@@ -1,13 +1,15 @@
 # Cortex
 
-A VS Code extension that turns any workspace folder into a local-first, GitHub-compatible markdown knowledge base. Pre-release; Phase 1 (sidebar, file tree, nexus discovery, placeholder reader) is implemented. The full product spec lives in [docs/PRD.md](docs/PRD.md).
+A VS Code extension that turns any workspace folder into a local-first, GitHub-compatible markdown knowledge base. Pre-release; Phases 1–3 are shipped (v0.2.0): sidebar, file tree, nexus discovery, GitHub-fidelity Reader, logical-node grouping, and Backlinks panel. The graph view (Phase 4) is next. The full product spec lives in [docs/PRD.md](docs/PRD.md).
 
 ## Terminology
 
 - **Nexus** — any workspace folder containing a `.cortex/` directory at its root. The unit Cortex operates on. Multi-root workspaces can have several nexuses, but only one is active at a time. Nested nexuses are ignored.
-- **Cortex View** — the dedicated Activity Bar sidebar (separate from the built-in Explorer) hosting the Cortex Explorer tree.
-- **Reader** — the GitHub-fidelity markdown preview, opened as a webview-backed editor tab. Currently a placeholder; full rendering pipeline is Phase 2.
+- **Cortex View** — the dedicated Activity Bar sidebar (separate from the built-in Explorer) hosting the Cortex Explorer and Backlinks tree views.
+- **Reader** — the GitHub-fidelity markdown preview, opened as a webview-backed editor tab. Renders via markdown-it + Shiki + KaTeX + Mermaid with live re-render on source edits.
 - **Index file** — `README.md`, `INDEX.md`, or `index.md` (in priority order) in a folder. Merged into the folder node in the Cortex Explorer; the file isn't shown as a separate child.
+- **Logical node** — a doc declaring a `group` frontmatter property (a list of gitignore-style globs). The doc renders as an expandable parent in the Cortex Explorer, absorbing matching same-folder siblings as logical children. Presentation-only; the on-disk layout is unchanged.
+- **Link graph** — the in-memory directed graph of relative links between `.md` files, persisted at `.cortex/cache/linkgraph.json`. Powers the Backlinks panel and (later) the graph view.
 
 ## Architecture
 

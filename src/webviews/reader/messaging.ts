@@ -15,6 +15,7 @@ export type HostMessage =
           frontmatter: ReaderFrontmatter;
           baseUri: string;
           fileUri: string;
+          relPath: string;
           themeKind: ThemeKind;
           anchor?: string;
       }
@@ -31,6 +32,7 @@ export type HostMessage =
           frontmatter: ReaderFrontmatter;
           baseUri: string;
           fileUri: string;
+          relPath: string;
       }
     | {
           type: "navigateTo";
@@ -38,6 +40,7 @@ export type HostMessage =
           frontmatter: ReaderFrontmatter;
           baseUri: string;
           fileUri: string;
+          relPath: string;
           anchor?: string;
       }
     | { type: "themeChanged"; themeKind: ThemeKind };

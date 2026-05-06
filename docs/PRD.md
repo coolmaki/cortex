@@ -325,9 +325,9 @@ Cortex contributes a custom **Activity Bar container** (its own icon in the vert
 A second tree view in the Cortex sidebar, sitting under the Explorer.
 
 - Lists all `.md` files in the nexus that contain a relative link pointing to the **active file** (the file currently focused in either the Reader or the source editor).
-- Each entry shows: the linker's frontmatter `title`, with the linking line's text as a child/preview node.
-- Clicking an entry opens the source file in the Reader and scrolls to the linking line.
-- Refreshes on link-graph updates (which are triggered by save and by file-system events).
+- Each entry shows: the linker's frontmatter `title`, with each linking line's text as a child preview node.
+- Clicking the top-level entry opens the source file in the Reader. Clicking a child line entry opens the underlying file in a regular editor at the linking line. (Reader-side scroll-to-line is deferred — see [PHASE3.md](plan/PHASE3.md) Known Limitations.)
+- Refreshes on link-graph updates (which are triggered by save and by file-system events) and on active-file changes.
 - Empty state: "No backlinks for this file."
 
 ### 6.4 The Reader (Webview Editor Tab)
@@ -350,7 +350,7 @@ The Reader is Cortex's GitHub-fidelity markdown preview. It opens as a **webview
 
 The Reader's top region is pinned to the viewport so it remains visible while the body scrolls. It is rendered as a single `.sticky-header` block containing two rows:
 
-1. **Toolbar** — Back, Forward, Reload, Edit Source. Back/Forward drive the in-Reader history (mini-browser model, see *Internal link clicks* below). Edit Source opens the underlying file in a normal editor tab.
+1. **Toolbar** — Back, Forward, Reload, Edit Source, followed by the document's nexus-relative path as muted text (a non-interactive location indicator, similar to a browser's address bar). Back/Forward drive the in-Reader history (mini-browser model, see *Internal link clicks* below). Edit Source opens the underlying file in a normal editor tab.
 2. **Metadata strip** — renders `tags`, `type`, and `status` from frontmatter when any are present. `tags` render as `#tag` chips; `type` and `status` render as filled badges. Plain neutral colors only — per-type color/icon mapping and `type` validation are deferred (Phase 2.5). The strip is omitted entirely when none of the three properties are set.
 
 **Rendering pipeline (in webview):**
@@ -551,19 +551,26 @@ Extension Host (Node.js) — bundled to out/extension.js
 │   ├── Detect nexuses (workspace folders containing .cortex/).
 │   └── Wire services, providers, and command registrations.
 ├── Tree Data Providers
-│   ├── CortexExplorerProvider  ── implements vscode.TreeDataProvider
-│   ├── BacklinksProvider        ── (Phase 3)
-│   └── GroupingService          ── (Phase 3) resolves frontmatter `group` into the
-│                                    explorer's child-of relationships
+│   ├── CortexExplorerProvider  ── vscode.TreeDataProvider for the file tree;
+│   │                              consumes GroupingService for logical nodes
+│   ├── BacklinksProvider       ── second tree view; surfaces inbound links
+│   │                              for the active file
+│   └── GroupingService         ── resolves frontmatter `group` into the
+│                                   explorer's logical child-of relationships
 ├── Webview Providers
 │   ├── ReaderProvider          ── webview lifecycle, source watchers,
-│   │                              live-render debounce, link-click dispatch
-│   └── GraphProvider           ── (Phase 3)
+│   │                              live-render debounce, link-click dispatch,
+│   │                              fires onDidChangeCurrentDoc for backlinks
+│   └── GraphProvider           ── (Phase 4)
 ├── Services
 │   ├── NexusService            ── nexus discovery, switching, .cortex/ init
 │   ├── FrontmatterService      ── parse + mtime-cache frontmatter; expose title/etc.
 │   ├── IgnoreService           ── .gitignore + .cortex/ignore matching
-│   └── LinkGraphService        ── (Phase 3)
+│   ├── LinkGraphService        ── parses every .md, maintains in-memory
+│   │                              outbound + inbound graph, persists cache
+│   │                              at .cortex/cache/linkgraph.json
+│   └── ActiveFileTracker       ── unifies Reader URI + active text editor URI
+│                                   for the Backlinks panel
 ├── Commands  ── thin shells dispatching to services / providers
 └── Messaging ── postMessage protocol with webviews
                   (typed contracts in src/extension/reader/messaging.ts)
@@ -588,10 +595,12 @@ Webviews (sandboxed iframes) — one Vite bundle per webview
 
 | Type            | Payload                                                                              | Purpose                                                                          |
 | --------------- | ------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------- |
-| `init`          | `mode: "normal" \| "oversized"`; in normal mode: `content`, `frontmatter`, `baseUri`, `fileUri`, `themeKind`; in oversized: `preview`, `sizeBytes` | First render after webview mount, or after file switch. |
-| `update`        | `content`, `frontmatter`, `baseUri`, `fileUri`                                        | Debounced re-render of the currently-open document.                              |
-| `navigateTo`    | `content`, `frontmatter`, `baseUri`, `fileUri`, `anchor?`                              | Host-initiated navigation (internal link click). Webview pushes onto its history. |
+| `init`          | `mode: "normal" \| "oversized"`; in normal mode: `content`, `frontmatter`, `baseUri`, `fileUri`, `relPath`, `themeKind`; in oversized: `preview`, `sizeBytes` | First render after webview mount, or after file switch. |
+| `update`        | `content`, `frontmatter`, `baseUri`, `fileUri`, `relPath`                              | Debounced re-render of the currently-open document.                              |
+| `navigateTo`    | `content`, `frontmatter`, `baseUri`, `fileUri`, `relPath`, `anchor?`                    | Host-initiated navigation (internal link click). Webview pushes onto its history. |
 | `themeChanged`  | `themeKind`                                                                          | Theme switched in VS Code; webview re-applies theme + re-renders code blocks.    |
+
+`relPath` is the document's nexus-relative path (forward-slash normalized) used by the toolbar's location indicator.
 
 **Reader → Host:**
 
@@ -604,7 +613,7 @@ Webviews (sandboxed iframes) — one Vite bundle per webview
 | `reload`            | —                             | User clicked Reload; host resends `init` for the current document.          |
 | `forceRender`       | —                             | User clicked "Render anyway" in the oversized notice; host resends `init` bypassing the size limit. |
 
-**Graph (Phase 3):** analogous; `init` carries `{nodes, edges}`; `nodeClicked` opens the file in the Reader.
+**Graph (Phase 4):** analogous; `init` carries `{nodes, edges}`; `nodeClicked` opens the file in the Reader.
 
 ### 11.3 State Management
 
@@ -625,6 +634,9 @@ cortex/
 │   │   ├── frontmatter/          # FrontmatterService — parse + cache YAML, mtime-keyed
 │   │   ├── ignore/               # IgnoreService — .gitignore + .cortex/ignore matching
 │   │   ├── tree/                 # CortexExplorerProvider — TreeDataProvider + index merging
+│   │   ├── grouping/             # GroupingService + pure resolveGroup() for `group` frontmatter
+│   │   ├── linkgraph/            # LinkGraphService + pure parseLinks/cache/resolve modules
+│   │   ├── backlinks/            # BacklinksProvider + ActiveFileTracker
 │   │   ├── reader/
 │   │   │   ├── provider.ts       # ReaderProvider — webview lifecycle, watchers, debounce
 │   │   │   ├── messaging.ts      # typed host↔webview message contracts (host side)
@@ -652,7 +664,8 @@ cortex/
 │   ├── PRD.md                    # this file
 │   └── plan/
 │       ├── PHASE1.md
-│       └── PHASE2.md
+│       ├── PHASE2.md
+│       └── PHASE3.md
 ├── .claude/rules/                # Path-scoped conventions for extension/webviews/typescript
 ├── package.json                  # extension manifest
 ├── tsconfig.json                 # extension host (CJS, Node target)
@@ -695,13 +708,14 @@ The `@/` path alias maps to `src/` everywhere (TS, esbuild, Vite, Vitest). Use i
 - Live re-render on source edits (~150ms debounce, scroll preserved).
 - Soft 500 KB size limit with "Render anyway" override.
 
-### Phase 3 — Logical Nodes & Backlinks (next)
+### Phase 3 — Logical Nodes & Backlinks ✅ Shipped (v0.2.0)
 
 - **GroupingService** + Cortex Explorer integration for `group` frontmatter (§5.5): glob-matching siblings, multi-parent attachment, cycle breaking, live updates on watcher events.
-- **LinkGraphService**: parse all `.md` in the nexus, build a directed link graph. Cache to `.cortex/cache/linkgraph.json`; invalidate by mtime mismatch. Incremental updates on save / FS events.
-- **BacklinksProvider** — second tree view in the Cortex sidebar; surfaces docs that link to the active file, with linking-line previews.
+- **LinkGraphService**: parses all `.md` in the nexus and builds a directed link graph. Persistent cache at `.cortex/cache/linkgraph.json`, schema-versioned and mtime-keyed; incremental updates on save and FS events; debounced writes with synchronous flush on dispose.
+- **BacklinksProvider** — second tree view in the Cortex sidebar; two-level tree (source doc → linking lines) with click-to-open behavior.
+- Reader toolbar gained a muted nexus-relative path indicator next to the action buttons.
 
-### Phase 4 — Graph View
+### Phase 4 — Graph View (next)
 
 - **Graph webview**: D3 force simulation rendered to canvas, click-to-open, hover highlight, pan/zoom, search/filter.
 - **Cortex: Open Graph View** command + tree-title-bar button.

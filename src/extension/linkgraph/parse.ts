@@ -23,20 +23,23 @@ export function parseLinks(source: string): ParsedLink[] {
         return [];
     }
 
+    // Table cells emit `inline` tokens with no `map`. Track the most recent
+    // sibling-block map[0] (e.g. tr_open) to fall back to.
+    let lastBlockLine = 0;
     for (const blockToken of tokens) {
+        if (blockToken.map) {
+            lastBlockLine = blockToken.map[0];
+        }
         if (blockToken.type !== "inline" || !blockToken.children) {
             continue;
         }
-        // Line number of the block token (0-based map[0] → 1-based)
-        const blockLine = blockToken.map ? blockToken.map[0] : 0;
+        const blockLine = blockToken.map ? blockToken.map[0] : lastBlockLine;
 
-        for (let i = 0; i < blockToken.children.length; i++) {
-            const token = blockToken.children[i];
-
+        for (const token of blockToken.children) {
             if (token.type === "link_open") {
                 const href = getAttr(token, "href");
                 if (href && !SKIP_HREF.test(href)) {
-                    const line = (token.map ? token.map[0] : blockLine) + 1;
+                    const line = blockLine + 1;
                     results.push({
                         kind: "link",
                         href,
@@ -47,7 +50,7 @@ export function parseLinks(source: string): ParsedLink[] {
             } else if (token.type === "image") {
                 const src = getAttr(token, "src");
                 if (src && !SKIP_HREF.test(src)) {
-                    const line = (token.map ? token.map[0] : blockLine) + 1;
+                    const line = blockLine + 1;
                     results.push({
                         kind: "image",
                         href: src,

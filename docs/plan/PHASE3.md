@@ -4,6 +4,8 @@ title: Phase 3 Implementation Plan
 
 # Cortex — Phase 3 Implementation Plan
 
+> **Status:** ✅ Shipped as v0.2.0. Retained as a historical record of the plan; the current product surface is described in [`PRD.md`](../PRD.md).
+
 ## Context
 
 [`PRD.md`](../PRD.md) specifies **Cortex**, a VS Code extension that turns any workspace folder into a local-first, GitHub-compatible markdown knowledge base. Phases 1 and 2 ([`PHASE1.md`](PHASE1.md), [`PHASE2.md`](PHASE2.md)) shipped the sidebar, Cortex Explorer, nexus discovery, ignore + frontmatter filtering, and a full GitHub-fidelity Reader (markdown-it + Shiki + KaTeX + Mermaid, sticky toolbar/strip, internal navigation, live re-render, soft size limit, GitHub-style heading anchors).
