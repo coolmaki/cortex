@@ -10,3 +10,4 @@ title: Documentation
     - [PHASE1.md](plan/PHASE1.md) — Sidebar, file tree, nexus discovery (shipped).
     - [PHASE2.md](plan/PHASE2.md) — GitHub-fidelity Reader (shipped, v0.1.0).
     - [PHASE3.md](plan/PHASE3.md) — Logical nodes + backlinks (shipped, v0.2.0).
+    - [PHASE4.md](plan/PHASE4.md) — Force-directed graph view (next).
