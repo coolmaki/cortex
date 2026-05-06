@@ -1,0 +1,165 @@
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html,
+body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: var(--vscode-editor-background);
+    color: var(--vscode-editor-foreground);
+    font-family: var(--vscode-font-family);
+    font-size: var(--vscode-font-size);
+}
+
+/* ── header ────────────────────────────────────────────────────────────────── */
+
+.graph-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    background: var(--vscode-editor-background);
+    border-bottom: 1px solid var(--vscode-panel-border, transparent);
+    z-index: 10;
+}
+
+#search {
+    width: 240px;
+    padding: 4px 8px;
+    background: var(--vscode-input-background);
+    color: var(--vscode-input-foreground);
+    border: 1px solid var(--vscode-input-border, transparent);
+    border-radius: 3px;
+    font-size: inherit;
+    font-family: inherit;
+    outline: none;
+}
+
+#search:focus {
+    border-color: var(--vscode-focusBorder);
+}
+
+#search::placeholder {
+    color: var(--vscode-input-placeholderForeground);
+}
+
+/* ── graph container ────────────────────────────────────────────────────────── */
+
+#graph-container {
+    position: fixed;
+    top: 40px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+}
+
+#graph-svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+    cursor: default;
+}
+
+/* ── empty state ────────────────────────────────────────────────────────────── */
+
+.graph-empty {
+    position: fixed;
+    top: 40px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--vscode-descriptionForeground);
+}
+
+/* ── bezier easing shared by all transitions ────────────────────────────────── */
+/*
+   cubic-bezier(0.4, 0, 0.2, 1) — Material Design standard ease.
+   Starts with a brisk ramp and decelerates gently at the end,
+   giving a natural feel on both appear and disappear.
+*/
+
+/* ── nodes — default (muted/pastel) ────────────────────────────────────────── */
+
+.node {
+    cursor: pointer;
+}
+
+.node circle {
+    fill: var(--vscode-button-background, #0e639c);
+    fill-opacity: 0.5;
+    transition:
+        fill-opacity 220ms cubic-bezier(0.4, 0, 0.2, 1),
+        stroke-opacity 220ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.node text {
+    fill: var(--vscode-editor-foreground);
+    font-size: 11px;
+    opacity: 0.55;
+    pointer-events: none;
+    user-select: none;
+    transition: opacity 220ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ── nodes — highlight (hovered node + its neighbors) ──────────────────────── */
+
+.node.highlight circle {
+    fill-opacity: 1;
+}
+
+.node.highlight text {
+    opacity: 1;
+}
+
+/* ── nodes — dim (non-neighbors during hover, non-matches during search) ─────── */
+
+.node.dim circle {
+    fill-opacity: 0.1;
+}
+
+.node.dim text {
+    opacity: 0.1;
+}
+
+/* ── nodes — active file ────────────────────────────────────────────────────── */
+
+.node.active circle {
+    stroke: var(--vscode-focusBorder, #007fd4);
+    stroke-opacity: 0.9;
+    stroke-width: 2px;
+}
+
+/* ── edges — default (muted) ────────────────────────────────────────────────── */
+
+.edge {
+    stroke: var(--vscode-editor-foreground, #ccc);
+    stroke-opacity: 0.15;
+    stroke-width: 1.5px;
+    fill: none;
+    transition: stroke-opacity 220ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ── edges — highlight (connected to the hovered node) ─────────────────────── */
+
+.edge.highlight {
+    stroke-opacity: 0.65;
+}
+
+/* ── edges — dim ────────────────────────────────────────────────────────────── */
+
+.edge.dim {
+    stroke-opacity: 0.03;
+}

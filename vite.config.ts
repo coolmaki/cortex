@@ -12,6 +12,7 @@ export default defineConfig({
         rollupOptions: {
             input: {
                 reader: path.resolve(__dirname, "src/webviews/reader/index.html"),
+                graph: path.resolve(__dirname, "src/webviews/graph/index.html"),
             },
             output: {
                 // Entry lives at the bundle root so dynamic-import chunk paths

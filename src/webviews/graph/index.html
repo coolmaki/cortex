@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cortex Graph</title>
+  <link rel="stylesheet" href="./styles/base.css">
+</head>
+<body data-theme="dark">
+  <header class="graph-header">
+    <input type="text" id="search" placeholder="Search…" autocomplete="off" spellcheck="false">
+  </header>
+  <div id="empty-state" class="graph-empty" hidden>
+    <p id="empty-message"></p>
+  </div>
+  <div id="graph-container"></div>
+  <script type="module" src="./main.ts"></script>
+</body>
+</html>

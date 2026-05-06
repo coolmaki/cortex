@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 import type { NexusService } from "@/extension/nexus/service";
 import type { CortexExplorerProvider, CortexNode } from "@/extension/tree/explorer";
 import type { ReaderProvider } from "@/extension/reader/provider";
+import type { GraphProvider } from "@/extension/graph/provider";
 import type { ParsedLink } from "@/extension/linkgraph/parse";
 
 interface LinkGraphAccessor {
@@ -14,12 +15,14 @@ export function registerCommands(
     nexus: NexusService,
     explorer: CortexExplorerProvider,
     reader: ReaderProvider,
+    graph: GraphProvider,
     linkGraph?: LinkGraphAccessor,
 ): void {
     context.subscriptions.push(
         vscode.commands.registerCommand("cortex.nexus.initialize", () => cmdInitialize(nexus)),
         vscode.commands.registerCommand("cortex.nexus.switch", () => nexus.setActiveByPick()),
         vscode.commands.registerCommand("cortex.nexus.openOrSwitch", () => cmdOpenOrSwitch(nexus)),
+        vscode.commands.registerCommand("cortex.graph.open", () => graph.open()),
         vscode.commands.registerCommand("cortex.tree.refresh", () => explorer.refresh()),
         vscode.commands.registerCommand(
             "cortex.tree.openInReader",

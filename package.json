@@ -2,7 +2,7 @@
     "name": "vscode-cortex",
     "displayName": "Cortex for VS Code",
     "description": "Your repo's brain.",
-    "version": "0.2.1",
+    "version": "0.3.0",
     "publisher": "maki-software",
     "icon": "assets/cortex.png",
     "repository": {
@@ -101,6 +101,12 @@
                 "command": "cortex.dev.dumpLinkGraph",
                 "title": "Dump Link Graph (Dev)",
                 "category": "Cortex"
+            },
+            {
+                "command": "cortex.graph.open",
+                "title": "Open Graph View",
+                "category": "Cortex",
+                "icon": "$(graph)"
             }
         ],
         "menus": {
@@ -121,6 +127,11 @@
             "view/title": [
                 {
                     "command": "cortex.tree.refresh",
+                    "when": "view == cortex.explorer",
+                    "group": "navigation"
+                },
+                {
+                    "command": "cortex.graph.open",
                     "when": "view == cortex.explorer",
                     "group": "navigation"
                 }
@@ -158,6 +169,10 @@
         "test:watch": "vitest"
     },
     "devDependencies": {
+        "@types/d3-drag": "^3.0.7",
+        "@types/d3-force": "^3.0.10",
+        "@types/d3-selection": "^3.0.11",
+        "@types/d3-zoom": "^3.0.8",
         "@types/node": "^25.6.0",
         "@types/vscode": "^1.100.0",
         "@vscode/vsce": "^3.9.1",
@@ -175,6 +190,10 @@
         "@types/katex": "^0.16.8",
         "@types/markdown-it": "^14.1.2",
         "@vscode/markdown-it-katex": "^1.1.2",
+        "d3-drag": "^3.0.0",
+        "d3-force": "^3.0.0",
+        "d3-selection": "^3.0.0",
+        "d3-zoom": "^3.0.0",
         "github-markdown-css": "^5.9.0",
         "gray-matter": "^4.0.3",
         "ignore": "^7.0.5",

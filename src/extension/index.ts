@@ -4,6 +4,7 @@ import { FrontmatterService } from "@/extension/frontmatter/service";
 import { IgnoreService } from "@/extension/ignore/service";
 import { CortexExplorerProvider } from "@/extension/tree/explorer";
 import { ReaderProvider } from "@/extension/reader/provider";
+import { GraphProvider } from "@/extension/graph/provider";
 import { createStatusBar } from "@/extension/statusbar/statusbar";
 import { registerCommands } from "@/extension/commands/index";
 import { LinkGraphService } from "@/extension/linkgraph/service";
@@ -80,8 +81,22 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
         vscode.window.registerTreeDataProvider("cortex.backlinks", backlinksProvider),
     );
 
+    const graphProvider = new GraphProvider(
+        context.extensionUri,
+        nexus,
+        linkGraphProxy,
+        frontmatter,
+        activeFile,
+    );
+    context.subscriptions.push(graphProvider);
+
+    // Dispose the graph panel when the active nexus changes (graph is per-nexus)
+    nexus.onDidChangeActive(() => {
+        graphProvider.disposePanel();
+    });
+
     context.subscriptions.push(createStatusBar(nexus));
-    registerCommands(context, nexus, explorerProvider, reader, linkGraphProxy);
+    registerCommands(context, nexus, explorerProvider, reader, graphProvider, linkGraphProxy);
 }
 
 export function deactivate(): void {}
